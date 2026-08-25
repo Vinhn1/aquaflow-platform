@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Cổng Điều Hành & Quầy Giao Dịch CAWACO (AquaFlow Admin)</title>
+  <link rel="stylesheet" href="./src/style.css" />
+</head>
+<body>
+  <div id="admin-app" class="admin-layout">
+    <!-- Sidebar -->
+    <aside class="sidebar">
+      <div class="brand">
+        <div class="brand-logo">CAWACO</div>
+        <div class="brand-title">Cổng Quản Trị & Quầy</div>
+      </div>
+      <nav class="nav-menu">
+        <button class="nav-item active" data-view="QUEUE">
+          Gọi Số Quầy Giao Dịch
+        </button>
+        <button class="nav-item" data-view="COMPLAINTS">
+          Điều Phối Sự Cố Nước
+        </button>
+        <button class="nav-item" data-view="OUTAGES">
+          Thông Báo Cúp Nước
+        </button>
+        <button class="nav-item" data-view="CUSTOMERS">
+          Hồ Sơ Khách Hàng
+        </button>
+      </nav>
+      <div class="user-badge">
+        <strong>Nhân viên: Trần Văn B</strong><br/>
+        <span>Quầy 01 - Trụ sở 204 Quang Trung</span>
+      </div>
+    </aside>
+
+    <!-- Main Content -->
+    <main class="main-body" id="admin-content"></main>
+  </div>
+
+  <script type="module" src="./src/main.ts"></script>
+</body>
+</html>
