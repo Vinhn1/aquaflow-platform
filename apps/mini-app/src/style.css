@@ -294,66 +294,127 @@ body {
   line-height: 1.2;
 }
 
-/* Banner Carousel */
-.banner-slider {
-  display: flex;
-  gap: 12px;
-  overflow-x: auto;
-  scroll-snap-type: x mandatory;
-  padding-bottom: 8px;
-  margin-bottom: 18px;
-  scrollbar-width: none;
-}
-
-.banner-slider::-webkit-scrollbar {
-  display: none;
-}
-
-.banner-card {
-  flex: 0 0 88%;
-  scroll-snap-align: start;
-  border-radius: var(--radius-lg);
-  padding: 16px;
-  color: #ffffff;
+/* Auto-play Image Slider / Carousel */
+.slider-container {
   position: relative;
+  width: 100%;
+  border-radius: var(--radius-lg);
   overflow: hidden;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+  margin-bottom: 18px;
+  box-shadow: 0 4px 14px rgba(11, 107, 203, 0.12);
 }
 
-.banner-blue {
-  background: linear-gradient(135deg, #0B6BCB, #00A3C4);
+.slider-track {
+  display: flex;
+  transition: transform 0.45s cubic-bezier(0.25, 1, 0.5, 1);
+  width: 100%;
 }
 
-.banner-teal {
-  background: linear-gradient(135deg, #00796B, #00A3C4);
+.slide-item {
+  flex: 0 0 100%;
+  min-width: 100%;
+  height: 155px;
+  padding: 16px 18px;
+  color: #ffffff;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  position: relative;
+  cursor: pointer;
+  user-select: none;
 }
 
-.banner-navy {
-  background: linear-gradient(135deg, #003366, #0B6BCB);
+.slide-blue {
+  background: linear-gradient(135deg, #003366 0%, #0B6BCB 60%, #00A3C4 100%);
 }
 
-.banner-tag {
+.slide-cyan {
+  background: linear-gradient(135deg, #004B87 0%, #00A3C4 70%, #38BDF8 100%);
+}
+
+.slide-green {
+  background: linear-gradient(135deg, #064E3B 0%, #059669 65%, #34D399 100%);
+}
+
+.slide-amber {
+  background: linear-gradient(135deg, #78350F 0%, #D97706 65%, #FBBF24 100%);
+}
+
+.slide-watermark {
+  position: absolute;
+  right: 12px;
+  bottom: 8px;
+  opacity: 0.15;
+  pointer-events: none;
+}
+
+.slide-tag {
   font-size: 10px;
   font-weight: 700;
   text-transform: uppercase;
   background: rgba(255, 255, 255, 0.25);
-  padding: 3px 8px;
+  backdrop-filter: blur(4px);
+  padding: 3px 9px;
   border-radius: var(--radius-full);
   display: inline-block;
-  margin-bottom: 8px;
+  align-self: flex-start;
+  letter-spacing: 0.5px;
 }
 
-.banner-title {
-  font-size: 15px;
-  font-weight: 700;
-  margin-bottom: 4px;
+.slide-title {
+  font-size: 16px;
+  font-weight: 800;
+  margin-top: 4px;
+  margin-bottom: 2px;
   line-height: 1.3;
 }
 
-.banner-desc {
+.slide-desc {
   font-size: 12px;
   opacity: 0.9;
-  line-height: 1.3;
+  line-height: 1.35;
+}
+
+.slide-cta {
+  font-size: 11px;
+  font-weight: 700;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  background: rgba(255, 255, 255, 0.2);
+  padding: 4px 10px;
+  border-radius: var(--radius-md);
+  align-self: flex-start;
+  margin-top: 6px;
+}
+
+/* Carousel Dots Indicator */
+.slider-dots {
+  position: absolute;
+  bottom: 8px;
+  left: 0;
+  right: 0;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 5px;
+  z-index: 10;
+}
+
+.slider-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.45);
+  transition: all 0.3s ease;
+  cursor: pointer;
+}
+
+.slider-dot.active {
+  width: 18px;
+  border-radius: 6px;
+  background: #ffffff;
+  box-shadow: 0 0 6px rgba(255, 255, 255, 0.8);
 }
 
 /* Chart Widget */

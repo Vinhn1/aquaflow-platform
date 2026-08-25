@@ -3,6 +3,8 @@ import { MockUser, MockLinkedMeter, MockInvoice, MockNews, MockBranch, MockQueue
 // State Management
 const state = {
   activeTab: 'HOME' as 'HOME' | 'NEWS' | 'MAP' | 'ACCOUNT',
+  currentSlideIndex: 0,
+  sliderTimer: null as any,
   currentUser: {
     id: 'usr-zalo-8891',
     zaloId: 'zalo_user_cawaco_01',
@@ -70,6 +72,48 @@ const state = {
     { period: 'T6/26', m3: 21, heightPercent: 68 },
     { period: 'T7/26', m3: 22, heightPercent: 72 },
     { period: 'T8/26', m3: 25, heightPercent: 88, current: true },
+  ],
+  bannerSlides: [
+    {
+      id: 'slide-1',
+      theme: 'slide-blue',
+      tag: 'Thanh toán trực tuyến',
+      title: 'Thanh toán nước qua VietQR',
+      desc: 'Quét mã tiện lợi, gạch nợ tự động trong 5 giây, nhận hóa đơn điện tử.',
+      cta: 'Thanh toán ngay',
+      action: 'PAYMENT',
+      iconSvg: '<svg width="74" height="74" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M7 7h.01"/><path d="M17 7h.01"/><path d="M7 17h.01"/><path d="M17 17h.01"/></svg>',
+    },
+    {
+      id: 'slide-2',
+      theme: 'slide-cyan',
+      tag: 'Tiện ích quầy 204 Quang Trung',
+      title: 'Bốc số trực tuyến thông minh',
+      desc: 'Lấy số thứ tự điện tử trước khi đến trụ sở, theo dõi vị trí hàng đợi trực tiếp.',
+      cta: 'Lấy số thứ tự',
+      action: 'QUEUE',
+      iconSvg: '<svg width="74" height="74" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>',
+    },
+    {
+      id: 'slide-3',
+      theme: 'slide-green',
+      tag: 'Tuyên truyền cộng đồng',
+      title: 'Tiết kiệm & Bảo vệ nguồn nước',
+      desc: 'Chung tay giữ gìn nguồn nước ngọt Cà Mau và kiểm tra chống rò rỉ ngầm.',
+      cta: 'Xem cẩm nang',
+      action: 'GUIDE',
+      iconSvg: '<svg width="74" height="74" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M12 2.69l5.66 5.66a8 8 0 1 1-11.31 0z"/></svg>',
+    },
+    {
+      id: 'slide-4',
+      theme: 'slide-amber',
+      tag: 'Tiếp nhận 24/7',
+      title: 'Báo sự cố vỡ đường ống nước',
+      desc: 'Gửi phản ánh kèm vị trí GPS và ảnh hiện trường để đội kỹ thuật xử lý nhanh.',
+      cta: 'Báo sự cố ngay',
+      action: 'COMPLAINT',
+      iconSvg: '<svg width="74" height="74" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>',
+    },
   ],
   mediaArticles: [
     {
@@ -265,6 +309,34 @@ function renderBottomNav() {
   });
 }
 
+// Slider Engine Helpers
+function goToSlide(index: number) {
+  const track = document.getElementById('home-slider-track');
+  if (!track) return;
+
+  const total = state.bannerSlides.length;
+  state.currentSlideIndex = (index + total) % total;
+  track.style.transform = `translateX(-${state.currentSlideIndex * 100}%)`;
+
+  // Update dots
+  document.querySelectorAll('.slider-dot').forEach((dot, idx) => {
+    if (idx === state.currentSlideIndex) {
+      dot.classList.add('active');
+    } else {
+      dot.classList.remove('active');
+    }
+  });
+}
+
+function startSliderAutoPlay() {
+  if (state.sliderTimer) clearInterval(state.sliderTimer);
+  state.sliderTimer = setInterval(() => {
+    if (state.activeTab === 'HOME') {
+      goToSlide(state.currentSlideIndex + 1);
+    }
+  }, 4200);
+}
+
 // Views
 function renderHomeView(): string {
   const currentInvoice = getActiveInvoice();
@@ -277,22 +349,29 @@ function renderHomeView(): string {
       <div><strong>Lịch cúp nước:</strong> Tạm ngưng cấp nước đêm 28/08 phục vụ đấu nối tuyến ống D300 Quang Trung.</div>
     </div>
 
-    <!-- 2. Banner Carousel Slider -->
-    <div class="banner-slider">
-      <div class="banner-card banner-blue">
-        <span class="banner-tag">Thanh toán số</span>
-        <div class="banner-title">Thanh toán nước qua VietQR</div>
-        <div class="banner-desc">Quét mã tiện lợi, gạch nợ tức thì, nhận ngay hóa đơn điện tử VAT.</div>
+    <!-- 2. Auto-play Sliding Image Carousel Banner -->
+    <div class="slider-container" id="home-slider-container">
+      <div class="slider-track" id="home-slider-track">
+        ${state.bannerSlides.map((slide) => `
+          <div class="slide-item ${slide.theme}" data-slide-action="${slide.action}">
+            <div class="slide-watermark">${slide.iconSvg}</div>
+            <div>
+              <span class="slide-tag">${slide.tag}</span>
+              <div class="slide-title">${slide.title}</div>
+              <div class="slide-desc">${slide.desc}</div>
+            </div>
+            <div class="slide-cta">
+              ${slide.cta}
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 18 15 12 9 6"/></svg>
+            </div>
+          </div>
+        `).join('')}
       </div>
-      <div class="banner-card banner-teal">
-        <span class="banner-tag">Dịch vụ quầy</span>
-        <div class="banner-title">Bốc số trực tuyến 204 Quang Trung</div>
-        <div class="banner-desc">Lấy số trước khi đến trụ sở, theo dõi hàng đợi thời gian thực.</div>
-      </div>
-      <div class="banner-card banner-navy">
-        <span class="banner-tag">Tuyên truyền</span>
-        <div class="banner-title">Bảo vệ nguồn nước ngọt Cà Mau</div>
-        <div class="banner-desc">Chung tay sử dụng nước tiết kiệm và kiểm tra chống rò rỉ tại gia đình.</div>
+      <!-- Dots Indicator -->
+      <div class="slider-dots">
+        ${state.bannerSlides.map((_, idx) => `
+          <div class="slider-dot ${idx === state.currentSlideIndex ? 'active' : ''}" data-dot-index="${idx}"></div>
+        `).join('')}
       </div>
     </div>
 
@@ -847,7 +926,56 @@ function renderMainContent() {
 
   if (state.activeTab === 'HOME') {
     mainContent.innerHTML = renderHomeView();
-    // Attach Home Event Handlers
+
+    // Start Slider Engine
+    startSliderAutoPlay();
+
+    // Slider Click Action
+    document.querySelectorAll('.slide-item').forEach((slide) => {
+      slide.addEventListener('click', (e) => {
+        const action = (e.currentTarget as HTMLElement).getAttribute('data-slide-action');
+        if (action === 'PAYMENT') openVietQrModal();
+        else if (action === 'QUEUE') openQueueModal();
+        else if (action === 'COMPLAINT') openComplaintModal();
+        else if (action === 'GUIDE') {
+          openArticleModal({
+            tag: 'Tuyên truyền cộng đồng',
+            title: 'Tiết kiệm và Bảo vệ Nguồn nước sạch Cà Mau',
+            date: '26/08/2026',
+            author: 'Phòng Kỹ thuật Mạng lưới',
+            summary: 'Chủ động kiểm tra chống rò rỉ ngầm trong gia đình, sử dụng nước tiết kiệm và bảo vệ hộp đồng hồ nước trong mùa mưa bão.',
+          });
+        }
+      });
+    });
+
+    // Slider Dot Click
+    document.querySelectorAll('.slider-dot').forEach((dot) => {
+      dot.addEventListener('click', (e) => {
+        const idx = Number((e.currentTarget as HTMLElement).getAttribute('data-dot-index'));
+        goToSlide(idx);
+        startSliderAutoPlay();
+      });
+    });
+
+    // Touch Swipe on Slider
+    let startX = 0;
+    const sliderContainer = document.getElementById('home-slider-container');
+    sliderContainer?.addEventListener('touchstart', (e) => {
+      startX = e.touches[0].clientX;
+      if (state.sliderTimer) clearInterval(state.sliderTimer);
+    });
+    sliderContainer?.addEventListener('touchend', (e) => {
+      const endX = e.changedTouches[0].clientX;
+      const diffX = startX - endX;
+      if (Math.abs(diffX) > 40) {
+        if (diffX > 0) goToSlide(state.currentSlideIndex + 1);
+        else goToSlide(state.currentSlideIndex - 1);
+      }
+      startSliderAutoPlay();
+    });
+
+    // Attach Home Buttons Handlers
     document.getElementById('btn-pay-vietqr')?.addEventListener('click', openVietQrModal);
     document.getElementById('btn-view-invoice-detail')?.addEventListener('click', openInvoiceDetailModal);
     document.getElementById('btn-action-lookup')?.addEventListener('click', openInvoiceDetailModal);
@@ -886,10 +1014,13 @@ function renderMainContent() {
       });
     });
   } else if (state.activeTab === 'NEWS') {
+    if (state.sliderTimer) clearInterval(state.sliderTimer);
     mainContent.innerHTML = renderNewsView();
   } else if (state.activeTab === 'MAP') {
+    if (state.sliderTimer) clearInterval(state.sliderTimer);
     mainContent.innerHTML = renderMapView();
   } else if (state.activeTab === 'ACCOUNT') {
+    if (state.sliderTimer) clearInterval(state.sliderTimer);
     mainContent.innerHTML = renderAccountView();
     document.getElementById('btn-add-meter')?.addEventListener('click', () => {
       const newCode = prompt('Nhập Mã Danh Bộ mới (Ví dụ: CM309182):');
