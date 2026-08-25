@@ -15,7 +15,7 @@ const state = {
       id: 'm1',
       customerCode: 'CM102938',
       ownerName: 'NGUYỄN VĂN AN',
-      address: 'Số 204, đường Quang Trung, P. Tân Thành, TP. Cà Mau',
+      address: 'Số 204, đường Quang Trung, Khóm 26, Phường Tân Thành, TP. Cà Mau',
       label: 'Nhà riêng',
       isDefault: true,
       meterSerialNumber: 'MTR-88291',
@@ -63,6 +63,14 @@ const state = {
       dueDate: '05/08/2026',
     },
   ] as MockInvoice[],
+  consumptionHistory: [
+    { period: 'T3/26', m3: 18, heightPercent: 55 },
+    { period: 'T4/26', m3: 20, heightPercent: 62 },
+    { period: 'T5/26', m3: 24, heightPercent: 78 },
+    { period: 'T6/26', m3: 21, heightPercent: 68 },
+    { period: 'T7/26', m3: 22, heightPercent: 72 },
+    { period: 'T8/26', m3: 25, heightPercent: 88, current: true },
+  ],
   newsList: [
     {
       id: 'n1',
@@ -162,13 +170,16 @@ function renderHeader() {
             <div class="user-phone">${state.currentUser.phone}</div>
           </div>
         </div>
+        <div style="font-size: 11px; background: rgba(255, 255, 255, 0.2); padding: 4px 8px; border-radius: var(--radius-full);">
+          CAWACO Cà Mau
+        </div>
       </div>
       <div class="meter-selector" id="btn-select-meter">
         <div>
-          <span style="opacity: 0.8; font-size: 11px;">MÃ DANH BỘ ĐANG XEM:</span><br/>
-          <strong>${currentMeter.customerCode}</strong> - ${currentMeter.label}
+          <span style="opacity: 0.85; font-size: 11px; letter-spacing: 0.5px;">MÃ DANH BỘ ĐANG CHỌN:</span><br/>
+          <strong>${currentMeter.customerCode}</strong> - ${currentMeter.label} (${currentMeter.ownerName})
         </div>
-        <span style="font-weight: bold;">[Đổi]</span>
+        <span style="font-weight: 700; color: #fff;">[Đổi]</span>
       </div>
     </div>
   `;
@@ -222,29 +233,51 @@ function renderHomeView(): string {
   const currentMeter = getActiveMeter();
 
   return `
-    <!-- Ticker Notice -->
+    <!-- 1. Ticker Urgent Notice -->
     <div class="ticker-card">
       <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#E67E22" stroke-width="2"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
-      <div><strong>Thông báo:</strong> Cúp nước phục vụ sửa chữa tuyến Quang Trung đêm 28/08.</div>
+      <div><strong>Lịch cúp nước:</strong> Tạm ngưng cấp nước đêm 28/08 phục vụ đấu nối tuyến ống D300 Quang Trung.</div>
     </div>
 
-    <!-- Active Queue Ticket Widget (If booked) -->
+    <!-- 2. Banner Carousel Slider -->
+    <div class="banner-slider">
+      <div class="banner-card banner-blue">
+        <span class="banner-tag">Thanh toán số</span>
+        <div class="banner-title">Thanh toán nước qua VietQR</div>
+        <div class="banner-desc">Quét mã tiện lợi, gạch nợ tức thì, nhận ngay hóa đơn điện tử VAT.</div>
+      </div>
+      <div class="banner-card banner-teal">
+        <span class="banner-tag">Dịch vụ quầy</span>
+        <div class="banner-title">Bốc số trực tuyến 204 Quang Trung</div>
+        <div class="banner-desc">Lấy số trước khi đến trụ sở, theo dõi hàng đợi thời gian thực.</div>
+      </div>
+      <div class="banner-card banner-navy">
+        <span class="banner-tag">Tuyên truyền</span>
+        <div class="banner-title">Bảo vệ nguồn nước ngọt Cà Mau</div>
+        <div class="banner-desc">Chung tay sử dụng nước tiết kiệm và kiểm tra chống rò rỉ tại gia đình.</div>
+      </div>
+    </div>
+
+    <!-- 3. Live Active Queue Ticket (If booked) -->
     ${state.activeTicket ? `
       <div class="card" style="background: #E6F4FF; border-color: #0B6BCB;">
         <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
           <strong style="color: #004B87;">Vé Bốc Số Trực Tuyến</strong>
           <span class="badge" style="background: #0B6BCB; color: #fff;">${state.activeTicket.status === 'WAITING' ? 'Đang chờ phục vụ' : 'Đang phục vụ'}</span>
         </div>
-        <div style="font-size: 24px; font-weight: 700; color: #0B6BCB; margin: 4px 0;">Mã vé: ${state.activeTicket.ticketNumber}</div>
+        <div style="font-size: 26px; font-weight: 800; color: #0B6BCB; margin: 4px 0;">Mã vé: ${state.activeTicket.ticketNumber}</div>
         <div style="font-size: 13px; color: #1E293B;">Dịch vụ: ${state.activeTicket.serviceName}</div>
         <div style="font-size: 12px; color: #64748B; margin-top: 4px;">Ước tính: còn <strong>${state.activeTicket.positionInQueue}</strong> người phía trước (~${state.activeTicket.estimatedWaitMinutes} phút)</div>
       </div>
     ` : ''}
 
-    <!-- Hero Invoice Card -->
+    <!-- 4. Hero Invoice Card -->
     <div class="card bill-hero-card">
       <div class="bill-header">
-        <span style="font-size: 13px; font-weight: 600; color: var(--color-text-muted);">HÓA ĐƠN TIỀN NƯỚC</span>
+        <div>
+          <span style="font-size: 13px; font-weight: 700; color: var(--color-text-muted);">HÓA ĐƠN TIỀN NƯỚC</span>
+          <div style="font-size: 11px; color: var(--color-text-muted);">${currentMeter.customerCode} - ${currentMeter.ownerName}</div>
+        </div>
         <span class="badge ${currentInvoice?.status === 'UNPAID' ? 'badge-unpaid' : 'badge-paid'}">
           ${currentInvoice?.status === 'UNPAID' ? 'Chưa thanh toán' : 'Đã thanh toán'}
         </span>
@@ -259,12 +292,12 @@ function renderHomeView(): string {
           Thanh toán VietQR
         </button>
         <button class="btn btn-secondary" id="btn-view-invoice-detail" style="width: auto;">
-          Chi tiết
+          Bảng kê giá
         </button>
       </div>
     </div>
 
-    <!-- 6 Bento Quick Actions -->
+    <!-- 5. 6 Bento Quick Actions -->
     <div class="section-title">Tiện ích Dịch vụ Nước</div>
     <div class="bento-grid">
       <div class="bento-item" id="btn-action-lookup">
@@ -295,13 +328,92 @@ function renderHomeView(): string {
         <div class="bento-icon icon-purple">
           <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="8.5" cy="7" r="4"/><line x1="20" y1="8" x2="20" y2="14"/><line x1="23" y1="11" x2="17" y2="11"/></svg>
         </div>
-        <div class="bento-label">Đăng ký<br/>Cấp nước</div>
+        <div class="bento-label">Đăng ký<br/>Lắp mới</div>
       </div>
       <div class="bento-item" id="btn-action-hotline">
         <div class="bento-icon icon-red">
           <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/></svg>
         </div>
         <div class="bento-label">Tổng đài<br/>Hỗ trợ</div>
+      </div>
+    </div>
+
+    <!-- 6. Water Consumption Bar Chart Widget (6 Months Trend) -->
+    <div class="card">
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px;">
+        <span style="font-size: 14px; font-weight: 700; color: var(--color-text-main);">Lịch Sử Tiêu Thụ Nước (m³)</span>
+        <span class="badge" style="background: #FEF3C7; color: #D97706;">Tăng 13.6%</span>
+      </div>
+      <div style="font-size: 11px; color: var(--color-text-muted); margin-bottom: 12px;">Theo dõi lượng nước 6 tháng gần nhất để phát hiện sớm rò rỉ</div>
+      <div class="chart-container">
+        ${state.consumptionHistory.map((h) => `
+          <div class="chart-bar-group">
+            <span class="chart-value">${h.m3}</span>
+            <div class="chart-bar ${h.current ? 'current' : ''}" style="height: ${h.heightPercent}%;"></div>
+            <span class="chart-label">${h.period}</span>
+          </div>
+        `).join('')}
+      </div>
+    </div>
+
+    <!-- 7. Live Counter Load Status -->
+    <div class="live-counter-card">
+      <div>
+        <div style="font-size: 11px; font-weight: 700; color: #166534; text-transform: uppercase;">Quầy Giao Dịch Trực Tiếp</div>
+        <div style="font-size: 14px; font-weight: 700; color: #14532D; margin-top: 2px;">Trụ sở 204 Quang Trung</div>
+        <div style="font-size: 12px; color: #15803D; margin-top: 2px;">Đang phục vụ: <strong>4 quầy</strong> | Đang chờ: <strong>3 người</strong> (~12 phút)</div>
+      </div>
+      <button class="btn btn-primary" id="btn-quick-book" style="width: auto; padding: 8px 14px; font-size: 12px; white-space: nowrap;">
+        Bốc số ngay
+      </button>
+    </div>
+
+    <!-- 8. Online Service Citizen Guides -->
+    <div class="section-title">
+      <span>Cẩm Nang Thủ Tục Khách Hàng</span>
+    </div>
+    
+    <div class="guide-card" id="guide-install">
+      <div class="guide-step">1</div>
+      <div class="guide-info">
+        <div class="guide-title">Quy trình đăng ký lắp đặt mới đồng hồ nước</div>
+        <div class="guide-meta">Hồ sơ cần có: CCCD + Giấy tờ nhà đất | Khảo sát trong 3 ngày</div>
+      </div>
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--color-text-muted)" stroke-width="2"><polyline points="9 18 15 12 9 6"/></svg>
+    </div>
+
+    <div class="guide-card" id="guide-security">
+      <div class="guide-step">2</div>
+      <div class="guide-info">
+        <div class="guide-title">Nhận biết nhân viên kỹ thuật CAWACO chính thống</div>
+        <div class="guide-meta">Có bảng tên in logo CAWACO, đồng phục và giấy giới thiệu</div>
+      </div>
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--color-text-muted)" stroke-width="2"><polyline points="9 18 15 12 9 6"/></svg>
+    </div>
+
+    <div class="guide-card" id="guide-leak-check">
+      <div class="guide-step">3</div>
+      <div class="guide-info">
+        <div class="guide-title">Cách tự kiểm tra thất thoát rò rỉ nước ngầm</div>
+        <div class="guide-meta">Khóa toàn bộ vòi nước trong nhà và quan sát kim đỏ đồng hồ</div>
+      </div>
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--color-text-muted)" stroke-width="2"><polyline points="9 18 15 12 9 6"/></svg>
+    </div>
+
+    <!-- 9. 24/7 Emergency Hotline Box -->
+    <div class="card" style="background: linear-gradient(135deg, #004B87, #0B6BCB); color: #fff; margin-top: 20px; border: none;">
+      <div style="font-size: 15px; font-weight: 700; margin-bottom: 4px;">Đội Trực Sự Cố Mạng Lưới Nước 24/7</div>
+      <div style="font-size: 12px; opacity: 0.9; margin-bottom: 14px;">
+        Tiếp nhận và xử lý sự cố vỡ đường ống, mất nước trên toàn địa bàn TP. Cà Mau.
+      </div>
+      <div style="display: flex; gap: 8px;">
+        <a href="tel:02903836360" class="btn" style="background: #ffffff; color: var(--color-primary-dark); text-decoration: none; font-weight: 700;">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/></svg>
+          0290 3836 360
+        </a>
+        <a href="tel:02903836723" class="btn" style="background: rgba(255, 255, 255, 0.2); color: #ffffff; text-decoration: none; font-weight: 700;">
+          0290 3836 723
+        </a>
       </div>
     </div>
   `;
@@ -488,7 +600,6 @@ function openVietQrModal() {
       <div style="font-size: 13px; color: var(--color-text-muted); margin-bottom: 8px;">
         Quét mã bằng ứng dụng ngân hàng bất kỳ để thanh toán tự động
       </div>
-      <!-- Mock Dynamic VietQR Container -->
       <div style="background: #ffffff; padding: 16px; border-radius: var(--radius-md); border: 2px dashed #0B6BCB; display: inline-block; margin-bottom: 12px;">
         <svg width="180" height="180" viewBox="0 0 200 200">
           <rect width="200" height="200" fill="#fff"/>
@@ -678,6 +789,10 @@ function openSelfReadingModal() {
   });
 }
 
+function openGuideModal(title: string, details: string) {
+  openModal(title, `<div style="font-size: 13px; line-height: 1.6; color: var(--color-text-main);">${details}</div>`);
+}
+
 // Render Main Content
 function renderMainContent() {
   const mainContent = document.getElementById('main-content');
@@ -690,13 +805,26 @@ function renderMainContent() {
     document.getElementById('btn-view-invoice-detail')?.addEventListener('click', openInvoiceDetailModal);
     document.getElementById('btn-action-lookup')?.addEventListener('click', openInvoiceDetailModal);
     document.getElementById('btn-action-queue')?.addEventListener('click', openQueueModal);
+    document.getElementById('btn-quick-book')?.addEventListener('click', openQueueModal);
     document.getElementById('btn-action-complaint')?.addEventListener('click', openComplaintModal);
     document.getElementById('btn-action-self-reading')?.addEventListener('click', openSelfReadingModal);
     document.getElementById('btn-action-new-contract')?.addEventListener('click', () => {
-      alert('Đang mở biểu mẫu nộp hồ sơ lắp đặt mới bộ thủy lượng kế...');
+      openGuideModal('Đăng Ký Lắp Mới Đồng Hồ Nước', '<strong>Hồ sơ chuẩn bị:</strong><br/>1. Bản sao CCCD của chủ hộ.<br/>2. Bản sao Giấy chứng nhận QSD đất hoặc Hợp đồng thuê nhà hợp pháp.<br/><br/><strong>Thời gian xử lý:</strong> Khảo sát hiện trường trong 3 ngày làm việc, hoàn thành lắp đặt và cấp nước trong 5 ngày làm việc.');
     });
     document.getElementById('btn-action-hotline')?.addEventListener('click', () => {
       window.location.href = 'tel:02903836360';
+    });
+
+    document.getElementById('guide-install')?.addEventListener('click', () => {
+      openGuideModal('Quy Trình 3 Bước Lắp Đặt Đồng Hồ Nước', '<strong>Bước 1: Nộp hồ sơ</strong><br/>Nộp trực tiếp tại 204 Quang Trung hoặc đăng ký online trên Zalo Mini App.<br/><br/><strong>Bước 2: Khảo sát & Dự toán</strong><br/>Kỹ sư CAWACO đến tận nhà đo đạc tuyến ống và lập bảng dự toán chi phí cụ thể.<br/><br/><strong>Bước 3: Thi công & Nghiệm thu</strong><br/>Tiến hành đấu nối bộ thủy lượng kế, cấp nước sạch và ký kết hợp đồng dịch vụ.');
+    });
+
+    document.getElementById('guide-security')?.addEventListener('click', () => {
+      openGuideModal('Nhận Biết Nhân Viên CAWACO Chính Thống', 'Nhằm phòng ngừa các trường hợp giả mạo nhân viên cấp nước để trục lợi, CAWACO khuyến cáo:<br/><br/>1. <strong>Đồng phục:</strong> Áo xanh dương có thêu logo CAWACO Cà Mau.<br/>2. <strong>Thẻ tên:</strong> Có đóng dấu giáp lai của Công ty Cổ phần Cấp nước Cà Mau.<br/>3. <strong>Không thu tiền mặt trực tiếp tại nhà:</strong> Mọi thanh toán đều thông qua mã VietQR chuẩn hoặc tại các điểm thu tiền có hóa đơn điện tử.');
+    });
+
+    document.getElementById('guide-leak-check')?.addEventListener('click', () => {
+      openGuideModal('Hướng Dẫn Kiểm Tra Rò Rỉ Nước Ngầm', '<strong>Cách kiểm tra nhanh:</strong><br/><br/>1. Khóa tất cả các vòi nước, thiết bị vệ sinh, máy giặt trong toàn bộ ngôi nhà.<br/>2. Ra hộp bảo vệ đồng hồ nước và quan sát kim đỏ (hoặc bánh răng đếm nhỏ).<br/>3. Nếu kim đỏ hoặc các chữ số vẫn tiếp tục quay chầm chậm dù không sử dụng nước, chắc chắn đường ống nước ngầm trong nhà đang bị rò rỉ hoặc van phao bồn cầu bị hỏng.<br/>4. Hãy chủ động gọi thợ sửa chữa hoặc thông báo cho CAWACO để được hỗ trợ.');
     });
   } else if (state.activeTab === 'NEWS') {
     mainContent.innerHTML = renderNewsView();
