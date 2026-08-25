@@ -108,11 +108,31 @@ const state = {
       id: 'slide-4',
       theme: 'slide-amber',
       tag: 'Tiếp nhận 24/7',
-      title: 'Báo sự cố vỡ đường ống nước',
-      desc: 'Gửi phản ánh kèm vị trí GPS và ảnh hiện trường để đội kỹ thuật xử lý nhanh.',
-      cta: 'Báo sự cố ngay',
+      title: 'Phản ánh & Báo sự cố nước 24/7',
+      desc: 'Gửi phản ánh chất lượng nước, rò rỉ đường ống kèm vị trí GPS và ảnh hiện trường.',
+      cta: 'Phản ánh ngay',
       action: 'COMPLAINT',
       iconSvg: '<svg width="74" height="74" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>',
+    },
+  ],
+  complaintList: [
+    {
+      id: 'PA-2026-08819',
+      category: 'Rò rỉ van khóa trước đồng hồ nước',
+      address: 'Số 204 Quang Trung, P. Tân Thành, TP. Cà Mau',
+      status: 'PROCESSING',
+      statusText: 'Đang điều động kỹ thuật viên',
+      statusColor: '#D97706',
+      createdAt: '26/08/2026 09:15',
+    },
+    {
+      id: 'PA-2026-08102',
+      category: 'Nước bị đục nhẹ sau mưa lớn',
+      address: 'Khóm 26, Phường Tân Thành, TP. Cà Mau',
+      status: 'RESOLVED',
+      statusText: 'Đã xử lý xong (Đã súc rửa tuyến D100)',
+      statusColor: '#2ECC71',
+      createdAt: '24/08/2026 14:30',
     },
   ],
   mediaArticles: [
@@ -414,7 +434,7 @@ function renderHomeView(): string {
       </div>
     </div>
 
-    <!-- 5. 6 Bento Quick Actions -->
+    <!-- 5. 6 Bento Quick Actions with Virtual AI Assistant & Feedback -->
     <div class="section-title">Tiện ích Dịch vụ Nước</div>
     <div class="bento-grid">
       <div class="bento-item" id="btn-action-lookup">
@@ -431,9 +451,15 @@ function renderHomeView(): string {
       </div>
       <div class="bento-item" id="btn-action-complaint">
         <div class="bento-icon icon-amber">
-          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 1 1.73-3Z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
         </div>
-        <div class="bento-label">Báo sự cố<br/>Rò rỉ nước</div>
+        <div class="bento-label">Phản ánh<br/>& Báo sự cố</div>
+      </div>
+      <div class="bento-item" id="btn-action-ai-assistant">
+        <div class="bento-icon icon-indigo">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2a2 2 0 0 1 2 2v2a2 2 0 0 1-2 2 2 2 0 0 1-2-2V4a2 2 0 0 1 2-2z"/><rect x="4" y="8" width="16" height="12" rx="2"/><circle cx="9" cy="13" r="1.5"/><circle cx="15" cy="13" r="1.5"/><path d="M9 17h6"/></svg>
+        </div>
+        <div class="bento-label">Trợ lý ảo<br/>AI CAWACO</div>
       </div>
       <div class="bento-item" id="btn-action-self-reading">
         <div class="bento-icon icon-green">
@@ -446,12 +472,6 @@ function renderHomeView(): string {
           <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="8.5" cy="7" r="4"/><line x1="20" y1="8" x2="20" y2="14"/><line x1="23" y1="11" x2="17" y2="11"/></svg>
         </div>
         <div class="bento-label">Đăng ký<br/>Lắp mới</div>
-      </div>
-      <div class="bento-item" id="btn-action-hotline">
-        <div class="bento-icon icon-red">
-          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/></svg>
-        </div>
-        <div class="bento-label">Tổng đài<br/>Hỗ trợ</div>
       </div>
     </div>
 
@@ -845,37 +865,108 @@ function openQueueModal() {
 }
 
 function openComplaintModal() {
+  const currentMeter = getActiveMeter();
+
   const html = `
-    <div class="form-group">
-      <label class="form-label">Loại Sự Cố:</label>
-      <select class="form-select" id="comp-category">
-        <option value="PIPE_BURST_LEAK">Bể đường ống / Rò rỉ nước tràn mặt đường</option>
-        <option value="TURBID_DIRTY_WATER">Nước bị đục / Có cặn bẩn</option>
-        <option value="LOW_WATER_PRESSURE">Áp lực nước yếu / Không có nước</option>
-        <option value="METER_DEFECT">Đồng hồ nước bị kẹt / Hư hỏng chì niêm</option>
-      </select>
+    <div class="complaint-tab-header">
+      <div class="complaint-tab-btn active" id="tab-comp-new">Gửi Phản Ánh Mới</div>
+      <div class="complaint-tab-btn" id="tab-comp-history">Tiến Độ Phiếu (${state.complaintList.length})</div>
     </div>
-    <div class="form-group">
-      <label class="form-label">Vị Trí Hiện Tại (Tọa độ GPS):</label>
-      <input type="text" class="form-input" value="9.1768, 105.1502 (Gần 204 Quang Trung, TP. Cà Mau)" readonly />
+
+    <div id="pane-comp-new">
+      <div class="form-group">
+        <label class="form-label">Loại Phản Ánh & Ý Kiến:</label>
+        <select class="form-select" id="comp-category">
+          <option value="PIPE_BURST_LEAK">Bể đường ống / Rò rỉ nước tràn mặt đường</option>
+          <option value="TURBID_DIRTY_WATER">Chất lượng nước: Đục, có cặn bẩn, mùi lạ</option>
+          <option value="LOW_WATER_PRESSURE">Áp lực nước yếu / Mất nước sinh hoạt</option>
+          <option value="BILLING_ISSUE">Thắc mắc chỉ số đồng hồ & Tiền nước</option>
+          <option value="STAFF_ATTITUDE">Góp ý thái độ phục vụ của nhân viên</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Mã Danh Bộ Liên Quan:</label>
+        <input type="text" class="form-input" value="${currentMeter.customerCode} - ${currentMeter.ownerName}" readonly />
+      </div>
+      <div class="form-group">
+        <label class="form-label">Địa Điểm Xảy Ra Sự Cố (Tọa độ GPS):</label>
+        <input type="text" class="form-input" id="comp-location" value="9.1768, 105.1502 (${currentMeter.address})" />
+      </div>
+      <div class="form-group">
+        <label class="form-label">Nội Dung Chi Tiết:</label>
+        <textarea class="form-textarea" id="comp-desc" rows="3" placeholder="Mô tả cụ thể tình trạng sự cố hoặc nội dung kiến nghị..."></textarea>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Đính Kèm Ảnh Hiện Trường (Tối đa 3 ảnh):</label>
+        <input type="file" class="form-input" accept="image/*" />
+      </div>
+      <button class="btn btn-primary" id="btn-submit-comp">
+        Gửi Phản Ánh Ngay
+      </button>
     </div>
-    <div class="form-group">
-      <label class="form-label">Mô Tả Chi Tiết Sự Cố:</label>
-      <textarea class="form-textarea" id="comp-desc" rows="3" placeholder="Mô tả cụ thể vị trí và tình trạng rò rỉ..."></textarea>
+
+    <div id="pane-comp-history" style="display: none;">
+      ${state.complaintList.length === 0 ? '<div style="text-align:center; padding: 20px; color: var(--color-text-muted);">Chưa có phiếu phản ánh nào</div>' : ''}
+      ${state.complaintList.map((ticket) => `
+        <div class="ticket-item">
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px;">
+            <strong style="color: var(--color-primary); font-size: 13px;">${ticket.id}</strong>
+            <span class="badge" style="background: ${ticket.status === 'RESOLVED' ? '#E8F8F0' : '#FEF3C7'}; color: ${ticket.statusColor};">
+              ${ticket.statusText}
+            </span>
+          </div>
+          <div style="font-size: 13px; font-weight: 600; color: var(--color-text-main); margin-bottom: 2px;">
+            ${ticket.category}
+          </div>
+          <div style="font-size: 12px; color: var(--color-text-muted); margin-bottom: 2px;">
+            ${ticket.address}
+          </div>
+          <div style="font-size: 11px; color: #94A3B8;">
+            Thời gian tạo: ${ticket.createdAt}
+          </div>
+        </div>
+      `).join('')}
     </div>
-    <div class="form-group">
-      <label class="form-label">Hình Ảnh Hiện Trường (Tối đa 3 ảnh):</label>
-      <input type="file" class="form-input" accept="image/*" />
-    </div>
-    <button class="btn btn-primary" id="btn-submit-comp">
-      Gửi Báo Cáo Sự Cố
-    </button>
   `;
-  openModal('Phản Ánh Sự Cố Nước Khẩn Cấp', html);
+  openModal('Tiếp Nhận Phản Ánh & Kiến Nghị', html);
+
+  const tabNew = document.getElementById('tab-comp-new');
+  const tabHistory = document.getElementById('tab-comp-history');
+  const paneNew = document.getElementById('pane-comp-new');
+  const paneHistory = document.getElementById('pane-comp-history');
+
+  tabNew?.addEventListener('click', () => {
+    tabNew.classList.add('active');
+    tabHistory?.classList.remove('active');
+    if (paneNew) paneNew.style.display = 'block';
+    if (paneHistory) paneHistory.style.display = 'none';
+  });
+
+  tabHistory?.addEventListener('click', () => {
+    tabHistory.classList.add('active');
+    tabNew?.classList.remove('active');
+    if (paneNew) paneNew.style.display = 'none';
+    if (paneHistory) paneHistory.style.display = 'block';
+  });
 
   document.getElementById('btn-submit-comp')?.addEventListener('click', () => {
+    const catSelect = document.getElementById('comp-category') as HTMLSelectElement;
+    const catText = catSelect?.selectedOptions[0]?.text || 'Phản ánh sự cố nước';
+    const loc = (document.getElementById('comp-location') as HTMLInputElement)?.value || currentMeter.address;
+
+    const newTicketId = 'PA-2026-' + Math.floor(10000 + Math.random() * 90000);
+    state.complaintList.unshift({
+      id: newTicketId,
+      category: catText,
+      address: loc,
+      status: 'PROCESSING',
+      statusText: 'Đang tiếp nhận xử lý',
+      statusColor: '#D97706',
+      createdAt: new Date().toLocaleDateString('vi-VN') + ' ' + new Date().toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' }),
+    });
+
     closeModal();
-    alert('Đã gửi phản ánh thành công! Đội kỹ thuật CAWACO đã tiếp nhận và sẽ liên hệ xử lý.');
+    alert(`Gửi phản ánh thành công! Mã phiếu theo dõi của bạn là: ${newTicketId}. Đội kỹ thuật CAWACO đã tiếp nhận và đang tiến hành xử lý.`);
   });
 }
 
@@ -902,6 +993,122 @@ function openSelfReadingModal() {
   document.getElementById('btn-submit-reading')?.addEventListener('click', () => {
     closeModal();
     alert('Gửi chỉ số thành công! Dữ liệu đã được lưu vào hệ thống đối soát kỳ ghi số.');
+  });
+}
+
+function openAiAssistantModal() {
+  const currentInvoice = getActiveInvoice();
+  const currentMeter = getActiveMeter();
+
+  const html = `
+    <div class="chat-container">
+      <div class="chat-messages" id="ai-chat-box">
+        <div class="chat-bubble chat-bubble-bot">
+          Xin chào <strong>${state.currentUser.fullName}</strong>! Tôi là Trợ lý ảo CAWACO. Tôi có thể hỗ trợ bạn tra cứu tiền nước, tính biểu giá lũy tiến QĐ 13/2023, hướng dẫn lắp mới đồng hồ và tiếp nhận sự cố mạng lưới 24/7.
+        </div>
+      </div>
+
+      <div class="chat-chips">
+        <div class="chat-chip" data-query="tien-nuoc">Tiền nước tháng này?</div>
+        <div class="chat-chip" data-query="gia-nuoc">Biểu giá QĐ 13/2023?</div>
+        <div class="chat-chip" data-query="boc-so">Lấy số quầy 204?</div>
+        <div class="chat-chip" data-query="phan-anh">Gửi phản ánh sự cố?</div>
+      </div>
+
+      <div class="chat-input-row">
+        <input type="text" id="ai-user-input" placeholder="Nhập câu hỏi cho Trợ lý ảo CAWACO..." />
+        <button class="btn btn-primary" id="ai-send-btn" style="width: auto; padding: 10px 14px;">
+          Gửi
+        </button>
+      </div>
+    </div>
+  `;
+  openModal('Trợ Lý Ảo AI Cấp Nước Cà Mau', html);
+
+  function appendChat(text: string, isUser: boolean) {
+    const box = document.getElementById('ai-chat-box');
+    if (!box) return;
+    const msgDiv = document.createElement('div');
+    msgDiv.className = `chat-bubble ${isUser ? 'chat-bubble-user' : 'chat-bubble-bot'}`;
+    msgDiv.innerHTML = text;
+    box.appendChild(msgDiv);
+    box.scrollTop = box.scrollHeight;
+  }
+
+  function handleAiQuery(queryType: string, customText?: string) {
+    if (customText) appendChat(customText, true);
+
+    setTimeout(() => {
+      if (queryType === 'tien-nuoc') {
+        appendChat(
+          `Dạ, danh bộ <strong>${currentMeter.customerCode}</strong> (${currentMeter.label}) có hóa đơn <strong>${currentInvoice?.period}</strong>:<br/>` +
+          `&bull; Tiêu thụ: <strong>${currentInvoice?.consumptionM3} m³</strong><br/>` +
+          `&bull; Tổng tiền: <strong style="color:#0B6BCB;">${formatCurrency(currentInvoice?.totalAmount || 0)}</strong><br/>` +
+          `&bull; Trạng thái: ${currentInvoice?.status === 'UNPAID' ? '<span style="color:#E67E22; font-weight:700;">Chưa thanh toán (Hạn 05/09)</span>' : '<span style="color:#2ECC71; font-weight:700;">Đã thanh toán</span>'}`,
+          false
+        );
+      } else if (queryType === 'gia-nuoc') {
+        appendChat(
+          `Biểu giá nước sinh hoạt hộ dân cư theo QĐ 13/2023/QĐ-UBND tỉnh Cà Mau:<br/>` +
+          `&bull; 1-10 m³: <strong>6.600 đ/m³</strong><br/>` +
+          `&bull; 11-20 m³: <strong>8.100 đ/m³</strong><br/>` +
+          `&bull; 21-30 m³: <strong>9.600 đ/m³</strong><br/>` +
+          `&bull; Trên 30 m³: <strong>11.600 đ/m³</strong><br/>` +
+          `<em>(Chưa bao gồm 5% thuế GTGT và 10% phí bảo vệ môi trường)</em>`,
+          false
+        );
+      } else if (queryType === 'boc-so') {
+        appendChat(
+          `Hiện tại Trụ sở 204 Quang Trung, P. Tân Thành đang có <strong>4 quầy mở</strong> và <strong>3 khách đang đợi</strong> (~12 phút). Bạn có thể bấm vào tiện ích <strong>Bốc số trực tuyến</strong> ngoài trang chủ để lấy vé trước ạ!`,
+          false
+        );
+      } else if (queryType === 'phan-anh') {
+        appendChat(
+          `Để gửi phản ánh sự cố (bể ống, mất nước, nước đục) hoặc kiến nghị chất lượng dịch vụ, Quý khách hãy bấm vào ô <strong>Phản ánh & Báo sự cố</strong> trong mục Tiện ích. Đội kỹ thuật CAWACO sẽ tiếp nhận xử lý trong vòng 2 giờ!`,
+          false
+        );
+      } else {
+        appendChat(
+          `Cảm ơn Quý khách! Về yêu cầu này, Quý khách có thể sử dụng các tiện ích tra cứu trực tiếp trên Mini App hoặc gọi ngay Tổng đài CSKH 24/7: <strong>0290 3836 360</strong> để kỹ thuật viên CAWACO phục vụ nhanh nhất.`,
+          false
+        );
+      }
+    }, 400);
+  }
+
+  // Chip clicks
+  document.querySelectorAll('.chat-chip').forEach((chip) => {
+    chip.addEventListener('click', (e) => {
+      const q = (e.currentTarget as HTMLElement).getAttribute('data-query');
+      const text = (e.currentTarget as HTMLElement).textContent || '';
+      if (q) handleAiQuery(q, text);
+    });
+  });
+
+  // Send button & enter key
+  const inputEl = document.getElementById('ai-user-input') as HTMLInputElement;
+  const sendBtn = document.getElementById('ai-send-btn');
+  const doSend = () => {
+    const val = inputEl?.value?.trim();
+    if (!val) return;
+    inputEl.value = '';
+    const lower = val.toLowerCase();
+    if (lower.includes('tiền') || lower.includes('nợ') || lower.includes('hóa đơn')) {
+      handleAiQuery('tien-nuoc', val);
+    } else if (lower.includes('giá') || lower.includes('quyết định') || lower.includes('biểu giá')) {
+      handleAiQuery('gia-nuoc', val);
+    } else if (lower.includes('bốc số') || lower.includes('quầy') || lower.includes('lấy số')) {
+      handleAiQuery('boc-so', val);
+    } else if (lower.includes('phản ánh') || lower.includes('rò rỉ') || lower.includes('bể') || lower.includes('đục')) {
+      handleAiQuery('phan-anh', val);
+    } else {
+      handleAiQuery('other', val);
+    }
+  };
+
+  sendBtn?.addEventListener('click', doSend);
+  inputEl?.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter') doSend();
   });
 }
 
@@ -991,6 +1198,7 @@ function renderMainContent() {
     document.getElementById('btn-action-queue')?.addEventListener('click', openQueueModal);
     document.getElementById('btn-quick-book')?.addEventListener('click', openQueueModal);
     document.getElementById('btn-action-complaint')?.addEventListener('click', openComplaintModal);
+    document.getElementById('btn-action-ai-assistant')?.addEventListener('click', openAiAssistantModal);
     document.getElementById('btn-action-self-reading')?.addEventListener('click', openSelfReadingModal);
     document.getElementById('btn-action-new-contract')?.addEventListener('click', () => {
       openArticleModal({
@@ -1000,9 +1208,6 @@ function renderMainContent() {
         author: 'Phòng Giao dịch Khách hàng',
         summary: '<strong>Hồ sơ chuẩn bị:</strong><br/>1. Bản sao CCCD của chủ hộ.<br/>2. Bản sao Giấy chứng nhận QSD đất hoặc Hợp đồng thuê nhà hợp pháp.<br/><br/><strong>Thời gian xử lý:</strong> Khảo sát hiện trường trong 3 ngày làm việc, hoàn thành lắp đặt và cấp nước trong 5 ngày làm việc.',
       });
-    });
-    document.getElementById('btn-action-hotline')?.addEventListener('click', () => {
-      window.location.href = 'tel:02903836360';
     });
 
     // Handle "Xem tất cả" button -> Switch to NEWS tab

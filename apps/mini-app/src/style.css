@@ -296,6 +296,7 @@ body {
 .icon-green { background: #E8F8F0; color: #2ECC71; }
 .icon-purple { background: #F3E8FF; color: #9333EA; }
 .icon-red { background: #FEE2E2; color: #EF4444; }
+.icon-indigo { background: #EEF2FF; color: #4F46E5; }
 
 .bento-label {
   font-size: 12px;
@@ -623,39 +624,114 @@ body {
   gap: 10px;
 }
 
-/* Official Footer Info */
-.app-footer {
-  text-align: center;
-  padding: 12px 8px 24px;
-  border-top: 1px solid var(--color-border);
-  margin-top: 10px;
+/* Virtual AI Assistant Chat Box */
+.chat-container {
+  display: flex;
+  flex-direction: column;
+  height: 380px;
 }
 
-.footer-company {
-  font-size: 12px;
-  font-weight: 700;
-  color: var(--color-primary-dark);
-  text-transform: uppercase;
-  letter-spacing: 0.3px;
-  margin-bottom: 4px;
+.chat-messages {
+  flex: 1;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding-right: 4px;
+  margin-bottom: 10px;
 }
 
-.footer-address {
-  font-size: 11px;
-  color: var(--color-text-muted);
-  line-height: 1.4;
-  margin-bottom: 6px;
+.chat-bubble {
+  max-width: 85%;
+  padding: 10px 14px;
+  border-radius: var(--radius-md);
+  font-size: 13px;
+  line-height: 1.45;
 }
 
-.footer-contact {
-  font-size: 11px;
-  color: var(--color-text-muted);
+.chat-bubble-bot {
+  background: #F1F5F9;
+  color: var(--color-text-main);
+  align-self: flex-start;
+  border-bottom-left-radius: 2px;
+}
+
+.chat-bubble-user {
+  background: var(--color-primary);
+  color: #ffffff;
+  align-self: flex-end;
+  border-bottom-right-radius: 2px;
+}
+
+.chat-chips {
+  display: flex;
+  gap: 6px;
+  overflow-x: auto;
+  padding-bottom: 6px;
   margin-bottom: 8px;
+  scrollbar-width: none;
 }
 
-.footer-copyright {
-  font-size: 10px;
-  color: #94A3B8;
+.chat-chips::-webkit-scrollbar {
+  display: none;
+}
+
+.chat-chip {
+  background: #EEF2FF;
+  color: #4F46E5;
+  border: 1px solid #C7D2FE;
+  border-radius: var(--radius-full);
+  padding: 5px 10px;
+  font-size: 11px;
+  font-weight: 600;
+  white-space: nowrap;
+  cursor: pointer;
+}
+
+.chat-input-row {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+.chat-input-row input {
+  flex: 1;
+  padding: 10px 12px;
+  border-radius: var(--radius-md);
+  border: 1px solid var(--color-border);
+  font-size: 13px;
+  outline: none;
+}
+
+/* Complaint Tabs & Ticket List */
+.complaint-tab-header {
+  display: flex;
+  border-bottom: 1px solid var(--color-border);
+  margin-bottom: 14px;
+}
+
+.complaint-tab-btn {
+  flex: 1;
+  text-align: center;
+  padding: 8px 12px;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--color-text-muted);
+  cursor: pointer;
+  border-bottom: 2px solid transparent;
+}
+
+.complaint-tab-btn.active {
+  color: var(--color-primary);
+  border-bottom: 2px solid var(--color-primary);
+}
+
+.ticket-item {
+  background: var(--color-bg);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  padding: 12px;
+  margin-bottom: 10px;
 }
 
 /* Bottom Navigation */
@@ -713,7 +789,7 @@ body {
 .bottom-sheet {
   background: #ffffff;
   width: 100%;
-  max-height: 85%;
+  max-height: 88%;
   border-top-left-radius: var(--radius-lg);
   border-top-right-radius: var(--radius-lg);
   padding: 20px 16px 30px;
