@@ -71,6 +71,44 @@ const state = {
     { period: 'T7/26', m3: 22, heightPercent: 72 },
     { period: 'T8/26', m3: 25, heightPercent: 88, current: true },
   ],
+  mediaArticles: [
+    {
+      id: 'art-01',
+      tag: 'Chuyển đổi số',
+      tagType: 'blue',
+      title: 'CAWACO triển khai dịch vụ thanh toán tiền nước một chạm qua VietQR trên Zalo Mini App',
+      summary: 'Khách hàng sử dụng nước sạch tại TP. Cà Mau có thể tra cứu và thanh toán tiền nước trực tiếp, tức thì bằng mã QR chuẩn NAPAS247 mà không cần đến quầy.',
+      date: '26/08/2026',
+      author: 'Ban Truyền thông CAWACO',
+    },
+    {
+      id: 'art-02',
+      tag: 'Tuyên truyền cộng đồng',
+      tagType: 'green',
+      title: 'Khuyến cáo sử dụng nước ngọt tiết kiệm và phòng chống hạn mặn trong mùa khô tại Cà Mau',
+      summary: 'Các giải pháp chủ động trữ nước sạch hợp vệ sinh, kiểm tra van phao bồn chứa và bảo vệ cụm đồng hồ nước gia đình.',
+      date: '24/08/2026',
+      author: 'Phòng Kỹ thuật Mạng lưới',
+    },
+    {
+      id: 'art-03',
+      tag: 'Chính sách giá',
+      tagType: 'amber',
+      title: 'Chi tiết biểu giá nước sạch sinh hoạt mới áp dụng theo Quyết định số 13/2023/QĐ-UBND',
+      summary: 'Hướng dẫn tính toán định mức bậc thang sinh hoạt từ 1-10 m³, 11-20 m³, 21-30 m³ và trên 30 m³ cho các hộ gia đình.',
+      date: '20/08/2026',
+      author: 'Phòng Kế hoạch Kinh doanh',
+    },
+    {
+      id: 'art-04',
+      tag: 'Dịch vụ khách hàng',
+      tagType: 'purple',
+      title: 'Ra mắt tiện ích Bốc số trực tuyến tại Trụ sở 204 Quang Trung, P. Tân Thành',
+      summary: 'Giảm thiểu thời gian chờ đợi, nâng cao chất lượng phục vụ tại 4 quầy giao dịch khách hàng của Công ty Cổ phần Cấp nước Cà Mau.',
+      date: '18/08/2026',
+      author: 'Phòng Giao dịch Khách hàng',
+    },
+  ],
   newsList: [
     {
       id: 'n1',
@@ -368,37 +406,27 @@ function renderHomeView(): string {
       </button>
     </div>
 
-    <!-- 8. Online Service Citizen Guides -->
+    <!-- 8. Truyen Thong & Tin Tuc (Media Section as in Demo) -->
     <div class="section-title">
-      <span>Cẩm Nang Thủ Tục Khách Hàng</span>
+      <span>Truyền thông</span>
+      <span class="section-link" id="link-view-all-news">
+        Xem tất cả
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 18 15 12 9 6"/></svg>
+      </span>
     </div>
     
-    <div class="guide-card" id="guide-install">
-      <div class="guide-step">1</div>
-      <div class="guide-info">
-        <div class="guide-title">Quy trình đăng ký lắp đặt mới đồng hồ nước</div>
-        <div class="guide-meta">Hồ sơ cần có: CCCD + Giấy tờ nhà đất | Khảo sát trong 3 ngày</div>
+    ${state.mediaArticles.map((art) => `
+      <div class="media-card" data-article-id="${art.id}">
+        <div class="media-thumb ${art.tagType === 'green' ? 'media-thumb-green' : art.tagType === 'amber' ? 'media-thumb-amber' : art.tagType === 'purple' ? 'media-thumb-purple' : ''}">
+          <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 22h16a2 2 0 0 0 2-2V4a2 2 0 0 0-2-2H8a2 2 0 0 0-2 2v16a2 2 0 0 1-2 2Zm0 0a2 2 0 0 1-2-2v-9c0-1.1.9-2 2-2h2"/><path d="M18 14h-8"/><path d="M15 18h-5"/><path d="M10 6h8v4h-8V6Z"/></svg>
+        </div>
+        <div class="media-body">
+          <span class="media-badge">${art.tag}</span>
+          <div class="media-title">${art.title}</div>
+          <div class="media-date">${art.date} &bull; ${art.author}</div>
+        </div>
       </div>
-      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--color-text-muted)" stroke-width="2"><polyline points="9 18 15 12 9 6"/></svg>
-    </div>
-
-    <div class="guide-card" id="guide-security">
-      <div class="guide-step">2</div>
-      <div class="guide-info">
-        <div class="guide-title">Nhận biết nhân viên kỹ thuật CAWACO chính thống</div>
-        <div class="guide-meta">Có bảng tên in logo CAWACO, đồng phục và giấy giới thiệu</div>
-      </div>
-      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--color-text-muted)" stroke-width="2"><polyline points="9 18 15 12 9 6"/></svg>
-    </div>
-
-    <div class="guide-card" id="guide-leak-check">
-      <div class="guide-step">3</div>
-      <div class="guide-info">
-        <div class="guide-title">Cách tự kiểm tra thất thoát rò rỉ nước ngầm</div>
-        <div class="guide-meta">Khóa toàn bộ vòi nước trong nhà và quan sát kim đỏ đồng hồ</div>
-      </div>
-      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--color-text-muted)" stroke-width="2"><polyline points="9 18 15 12 9 6"/></svg>
-    </div>
+    `).join('')}
 
     <!-- 9. 24/7 Emergency Hotline Box -->
     <div class="card" style="background: linear-gradient(135deg, #004B87, #0B6BCB); color: #fff; margin-top: 20px; border: none;">
@@ -789,8 +817,27 @@ function openSelfReadingModal() {
   });
 }
 
-function openGuideModal(title: string, details: string) {
-  openModal(title, `<div style="font-size: 13px; line-height: 1.6; color: var(--color-text-main);">${details}</div>`);
+function openArticleModal(article: any) {
+  const html = `
+    <div>
+      <div style="font-size: 11px; font-weight: 700; color: var(--color-primary); text-transform: uppercase; margin-bottom: 4px;">
+        ${article.tag}
+      </div>
+      <div style="font-size: 16px; font-weight: 700; line-height: 1.4; color: var(--color-text-main); margin-bottom: 8px;">
+        ${article.title}
+      </div>
+      <div style="font-size: 11px; color: var(--color-text-muted); margin-bottom: 14px; border-bottom: 1px solid var(--color-border); padding-bottom: 8px;">
+        ${article.date} &bull; Tác giả: ${article.author}
+      </div>
+      <div style="font-size: 13px; line-height: 1.6; color: var(--color-text-main); margin-bottom: 16px;">
+        ${article.summary}
+      </div>
+      <div style="background: var(--color-primary-light); padding: 12px; border-radius: var(--radius-md); font-size: 12px; color: var(--color-primary-dark); line-height: 1.5;">
+        <strong>Nguồn tin chính thống:</strong> Công ty Cổ phần Cấp nước Cà Mau (CAWACO) - Số 204 Quang Trung, P. Tân Thành, TP. Cà Mau.
+      </div>
+    </div>
+  `;
+  openModal('Bản Tin CAWACO', html);
 }
 
 // Render Main Content
@@ -809,22 +856,34 @@ function renderMainContent() {
     document.getElementById('btn-action-complaint')?.addEventListener('click', openComplaintModal);
     document.getElementById('btn-action-self-reading')?.addEventListener('click', openSelfReadingModal);
     document.getElementById('btn-action-new-contract')?.addEventListener('click', () => {
-      openGuideModal('Đăng Ký Lắp Mới Đồng Hồ Nước', '<strong>Hồ sơ chuẩn bị:</strong><br/>1. Bản sao CCCD của chủ hộ.<br/>2. Bản sao Giấy chứng nhận QSD đất hoặc Hợp đồng thuê nhà hợp pháp.<br/><br/><strong>Thời gian xử lý:</strong> Khảo sát hiện trường trong 3 ngày làm việc, hoàn thành lắp đặt và cấp nước trong 5 ngày làm việc.');
+      openArticleModal({
+        tag: 'Dịch vụ cấp nước',
+        title: 'Đăng Ký Lắp Mới Đồng Hồ Nước',
+        date: '26/08/2026',
+        author: 'Phòng Giao dịch Khách hàng',
+        summary: '<strong>Hồ sơ chuẩn bị:</strong><br/>1. Bản sao CCCD của chủ hộ.<br/>2. Bản sao Giấy chứng nhận QSD đất hoặc Hợp đồng thuê nhà hợp pháp.<br/><br/><strong>Thời gian xử lý:</strong> Khảo sát hiện trường trong 3 ngày làm việc, hoàn thành lắp đặt và cấp nước trong 5 ngày làm việc.',
+      });
     });
     document.getElementById('btn-action-hotline')?.addEventListener('click', () => {
       window.location.href = 'tel:02903836360';
     });
 
-    document.getElementById('guide-install')?.addEventListener('click', () => {
-      openGuideModal('Quy Trình 3 Bước Lắp Đặt Đồng Hồ Nước', '<strong>Bước 1: Nộp hồ sơ</strong><br/>Nộp trực tiếp tại 204 Quang Trung hoặc đăng ký online trên Zalo Mini App.<br/><br/><strong>Bước 2: Khảo sát & Dự toán</strong><br/>Kỹ sư CAWACO đến tận nhà đo đạc tuyến ống và lập bảng dự toán chi phí cụ thể.<br/><br/><strong>Bước 3: Thi công & Nghiệm thu</strong><br/>Tiến hành đấu nối bộ thủy lượng kế, cấp nước sạch và ký kết hợp đồng dịch vụ.');
+    // Handle "Xem tất cả" button -> Switch to NEWS tab
+    document.getElementById('link-view-all-news')?.addEventListener('click', () => {
+      state.activeTab = 'NEWS';
+      renderBottomNav();
+      renderMainContent();
     });
 
-    document.getElementById('guide-security')?.addEventListener('click', () => {
-      openGuideModal('Nhận Biết Nhân Viên CAWACO Chính Thống', 'Nhằm phòng ngừa các trường hợp giả mạo nhân viên cấp nước để trục lợi, CAWACO khuyến cáo:<br/><br/>1. <strong>Đồng phục:</strong> Áo xanh dương có thêu logo CAWACO Cà Mau.<br/>2. <strong>Thẻ tên:</strong> Có đóng dấu giáp lai của Công ty Cổ phần Cấp nước Cà Mau.<br/>3. <strong>Không thu tiền mặt trực tiếp tại nhà:</strong> Mọi thanh toán đều thông qua mã VietQR chuẩn hoặc tại các điểm thu tiền có hóa đơn điện tử.');
-    });
-
-    document.getElementById('guide-leak-check')?.addEventListener('click', () => {
-      openGuideModal('Hướng Dẫn Kiểm Tra Rò Rỉ Nước Ngầm', '<strong>Cách kiểm tra nhanh:</strong><br/><br/>1. Khóa tất cả các vòi nước, thiết bị vệ sinh, máy giặt trong toàn bộ ngôi nhà.<br/>2. Ra hộp bảo vệ đồng hồ nước và quan sát kim đỏ (hoặc bánh răng đếm nhỏ).<br/>3. Nếu kim đỏ hoặc các chữ số vẫn tiếp tục quay chầm chậm dù không sử dụng nước, chắc chắn đường ống nước ngầm trong nhà đang bị rò rỉ hoặc van phao bồn cầu bị hỏng.<br/>4. Hãy chủ động gọi thợ sửa chữa hoặc thông báo cho CAWACO để được hỗ trợ.');
+    // Handle Media Card Clicks
+    document.querySelectorAll('.media-card').forEach((card) => {
+      card.addEventListener('click', (e) => {
+        const artId = (e.currentTarget as HTMLElement).getAttribute('data-article-id');
+        const article = state.mediaArticles.find((a) => a.id === artId);
+        if (article) {
+          openArticleModal(article);
+        }
+      });
     });
   } else if (state.activeTab === 'NEWS') {
     mainContent.innerHTML = renderNewsView();
