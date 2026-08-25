@@ -217,6 +217,16 @@ body {
   color: var(--color-text-main);
 }
 
+.btn-oa {
+  background-color: #0068FF;
+  color: #ffffff;
+}
+
+.btn-oa:active {
+  background-color: #0052CC;
+  transform: scale(0.98);
+}
+
 /* Bento Quick Actions */
 .section-title {
   font-size: 15px;
@@ -562,6 +572,90 @@ body {
   gap: 8px;
   font-size: 12px;
   margin-bottom: 16px;
+}
+
+/* Multi-channel Customer Care Support Card */
+.support-card {
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  padding: 16px;
+  margin-top: 20px;
+  margin-bottom: 16px;
+  box-shadow: var(--shadow-card);
+}
+
+.support-header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 8px;
+}
+
+.support-icon-wrap {
+  width: 36px;
+  height: 36px;
+  border-radius: var(--radius-full);
+  background: var(--color-primary-light);
+  color: var(--color-primary);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.support-title {
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--color-text-main);
+}
+
+.support-desc {
+  font-size: 12px;
+  color: var(--color-text-muted);
+  line-height: 1.4;
+  margin-bottom: 14px;
+}
+
+.support-actions {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+}
+
+/* Official Footer Info */
+.app-footer {
+  text-align: center;
+  padding: 12px 8px 24px;
+  border-top: 1px solid var(--color-border);
+  margin-top: 10px;
+}
+
+.footer-company {
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--color-primary-dark);
+  text-transform: uppercase;
+  letter-spacing: 0.3px;
+  margin-bottom: 4px;
+}
+
+.footer-address {
+  font-size: 11px;
+  color: var(--color-text-muted);
+  line-height: 1.4;
+  margin-bottom: 6px;
+}
+
+.footer-contact {
+  font-size: 11px;
+  color: var(--color-text-muted);
+  margin-bottom: 8px;
+}
+
+.footer-copyright {
+  font-size: 10px;
+  color: #94A3B8;
 }
 
 /* Bottom Navigation */

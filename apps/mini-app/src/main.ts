@@ -431,7 +431,7 @@ function renderHomeView(): string {
       </div>
       <div class="bento-item" id="btn-action-complaint">
         <div class="bento-icon icon-amber">
-          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 1 1.73-3Z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
         </div>
         <div class="bento-label">Báo sự cố<br/>Rò rỉ nước</div>
       </div>
@@ -507,20 +507,29 @@ function renderHomeView(): string {
       </div>
     `).join('')}
 
-    <!-- 9. 24/7 Emergency Hotline Box -->
-    <div class="card" style="background: linear-gradient(135deg, #004B87, #0B6BCB); color: #fff; margin-top: 20px; border: none;">
-      <div style="font-size: 15px; font-weight: 700; margin-bottom: 4px;">Đội Trực Sự Cố Mạng Lưới Nước 24/7</div>
-      <div style="font-size: 12px; opacity: 0.9; margin-bottom: 14px;">
-        Tiếp nhận và xử lý sự cố vỡ đường ống, mất nước trên toàn địa bàn TP. Cà Mau.
+    <!-- 9. Modern Multi-channel Customer Care Card -->
+    <div class="support-card">
+      <div class="support-header">
+        <div class="support-icon-wrap">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/></svg>
+        </div>
+        <div>
+          <div class="support-title">Trung tâm Hỗ trợ & CSKH 24/7</div>
+          <div style="font-size: 11px; color: var(--color-primary); font-weight: 600;">Sẵn sàng phục vụ người dân Cà Mau</div>
+        </div>
       </div>
-      <div style="display: flex; gap: 8px;">
-        <a href="tel:02903836360" class="btn" style="background: #ffffff; color: var(--color-primary-dark); text-decoration: none; font-weight: 700;">
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/></svg>
+      <div class="support-desc">
+        Tiếp nhận giải đáp thắc mắc về hóa đơn, đăng ký cấp nước và xử lý sự cố mạng lưới đường ống.
+      </div>
+      <div class="support-actions">
+        <a href="tel:02903836360" class="btn btn-primary" style="text-decoration: none; font-size: 13px; padding: 10px 8px;">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/></svg>
           0290 3836 360
         </a>
-        <a href="tel:02903836723" class="btn" style="background: rgba(255, 255, 255, 0.2); color: #ffffff; text-decoration: none; font-weight: 700;">
-          0290 3836 723
-        </a>
+        <button class="btn btn-oa" id="btn-open-zalo-oa" style="font-size: 13px; padding: 10px 8px;">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+          Chat Zalo OA
+        </button>
       </div>
     </div>
   `;
@@ -1012,6 +1021,11 @@ function renderMainContent() {
           openArticleModal(article);
         }
       });
+    });
+
+    // Handle Zalo OA Button
+    document.getElementById('btn-open-zalo-oa')?.addEventListener('click', () => {
+      alert('Đang chuyển hướng mở trang nhắn tin tư vấn trực tuyến với Zalo Official Account Cấp Nước Cà Mau (CAWACO)...');
     });
   } else if (state.activeTab === 'NEWS') {
     if (state.sliderTimer) clearInterval(state.sliderTimer);
