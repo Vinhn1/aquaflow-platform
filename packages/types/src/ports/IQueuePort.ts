@@ -20,6 +20,7 @@ export interface QueueTicketDto {
   serviceType: ServiceType;
   userId: string;
   customerName: string;
+  phone?: string;
   status: TicketStatus;
   counterId?: string;
   counterName?: string;
@@ -35,6 +36,7 @@ export interface IssueTicketParams {
   serviceType: ServiceType;
   userId: string;
   customerName: string;
+  phone?: string;
 }
 
 export interface IQueuePort {

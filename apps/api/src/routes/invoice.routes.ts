@@ -1,5 +1,5 @@
 import { Router } from 'express';
-import { GetInvoicesQuerySchema, InvoiceIdParamSchema } from '@aquaflow/validation';
+import { GetInvoicesQuerySchema } from '@aquaflow/validation';
 import { validateQuery } from '../middlewares/validate.middleware.js';
 import { BillingService } from '../services/BillingService.js';
 
