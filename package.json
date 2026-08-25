@@ -1,0 +1,24 @@
+{
+  "name": "aquaflow-platform",
+  "version": "0.1.0",
+  "private": true,
+  "description": "AquaFlow - Digital Water Customer Service Platform (Target Prototype: CAWACO)",
+  "workspaces": [
+    "apps/*",
+    "packages/*"
+  ],
+  "scripts": {
+    "build": "echo \"Build pipeline will be configured in Phase 6\"",
+    "test": "echo \"Tests will be executed in Phase 7\"",
+    "lint": "echo \"Linting will be configured in Phase 6\""
+  },
+  "keywords": [
+    "water-utility",
+    "customer-service",
+    "cawaco",
+    "zalo-mini-app",
+    "aquaflow"
+  ],
+  "author": "AquaFlow Team",
+  "license": "UNLICENSED"
+}
