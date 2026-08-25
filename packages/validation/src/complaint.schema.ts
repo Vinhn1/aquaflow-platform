@@ -1,25 +1,44 @@
 import { z } from 'zod';
 
-export const ComplaintCategoryEnum = z.enum([
-  'PIPE_BURST_LEAK',
-  'TURBID_DIRTY_WATER',
-  'LOW_WATER_PRESSURE',
-  'METER_DEFECT',
-  'OTHER',
-]);
+export const ComplaintCategoryEnum = z.enum(
+  [
+    'PIPE_BURST_LEAK',
+    'TURBID_DIRTY_WATER',
+    'LOW_WATER_PRESSURE',
+    'METER_DEFECT',
+    'OTHER',
+  ],
+  {
+    errorMap: () => ({ message: 'Danh mục sự cố không hợp lệ' }),
+  }
+);
 
 export const CreateComplaintSchema = z.object({
   category: ComplaintCategoryEnum,
-  description: z.string().min(10, 'Description must be at least 10 characters').max(1000),
-  latitude: z.number().min(8.0, 'Latitude outside Ca Mau region').max(10.0, 'Latitude outside Ca Mau region'),
-  longitude: z.number().min(104.0, 'Longitude outside Ca Mau region').max(106.0, 'Longitude outside Ca Mau region'),
-  addressText: z.string().max(255).optional(),
-  images: z.array(z.string().url('Image must be a valid URL')).max(3, 'Maximum 3 images allowed').default([]),
+  description: z
+    .string()
+    .min(10, 'Mô tả chi tiết sự cố phải có ít nhất 10 ký tự')
+    .max(1000, 'Mô tả không được vượt quá 1000 ký tự'),
+  latitude: z
+    .number()
+    .min(8.0, 'Tọa độ vĩ độ nằm ngoài phạm vi tỉnh Cà Mau')
+    .max(10.0, 'Tọa độ vĩ độ nằm ngoài phạm vi tỉnh Cà Mau'),
+  longitude: z
+    .number()
+    .min(104.0, 'Tọa độ kinh độ nằm ngoài phạm vi tỉnh Cà Mau')
+    .max(106.0, 'Tọa độ kinh độ nằm ngoài phạm vi tỉnh Cà Mau'),
+  addressText: z.string().max(255, 'Địa chỉ không được vượt quá 255 ký tự').optional(),
+  images: z
+    .array(z.string().url('Đường dẫn hình ảnh không hợp lệ'))
+    .max(3, 'Đính kèm tối đa 3 hình ảnh hiện trường')
+    .default([]),
 });
 
 export const UpdateComplaintStatusSchema = z.object({
-  status: z.enum(['SUBMITTED', 'RECEIVED', 'DISPATCHED', 'IN_PROGRESS', 'RESOLVED', 'REJECTED']),
-  adminNote: z.string().max(500).optional(),
+  status: z.enum(['SUBMITTED', 'RECEIVED', 'DISPATCHED', 'IN_PROGRESS', 'RESOLVED', 'REJECTED'], {
+    errorMap: () => ({ message: 'Trạng thái xử lý sự cố không hợp lệ' }),
+  }),
+  adminNote: z.string().max(500, 'Ghi chú xử lý không được vượt quá 500 ký tự').optional(),
 });
 
 export type CreateComplaintInput = z.infer<typeof CreateComplaintSchema>;

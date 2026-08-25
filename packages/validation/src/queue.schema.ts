@@ -1,29 +1,37 @@
 import { z } from 'zod';
 
-export const ServiceTypeEnum = z.enum([
-  'NEW_METER_REGISTRATION',
-  'BILLING_PAYMENT',
-  'CONTRACT_TRANSFER',
-  'COMPLAINT_INSPECTION',
-]);
+export const ServiceTypeEnum = z.enum(
+  [
+    'NEW_METER_REGISTRATION',
+    'BILLING_PAYMENT',
+    'CONTRACT_TRANSFER',
+    'COMPLAINT_INSPECTION',
+  ],
+  {
+    errorMap: () => ({ message: 'Dịch vụ yêu cầu không hợp lệ' }),
+  }
+);
 
 export const BookQueueTicketSchema = z.object({
-  branchId: z.string().uuid('Invalid branch ID format'),
+  branchId: z.string().uuid('Mã chi nhánh không hợp lệ'),
   serviceType: ServiceTypeEnum,
-  customerName: z.string().min(2, 'Customer name must be at least 2 characters').max(100),
+  customerName: z
+    .string()
+    .min(2, 'Tên khách hàng phải có ít nhất 2 ký tự')
+    .max(100, 'Tên khách hàng không được vượt quá 100 ký tự'),
 });
 
 export const CallNextTicketSchema = z.object({
-  branchId: z.string().uuid('Invalid branch ID'),
-  counterId: z.string().min(1, 'Counter ID is required'),
-  counterName: z.string().min(1, 'Counter name is required'),
+  branchId: z.string().uuid('Mã chi nhánh không hợp lệ'),
+  counterId: z.string().min(1, 'Mã quầy giao dịch là bắt buộc'),
+  counterName: z.string().min(1, 'Tên quầy giao dịch là bắt buộc'),
   serviceType: ServiceTypeEnum.optional(),
 });
 
 export const CompleteTicketSchema = z.object({
-  ticketId: z.string().uuid('Invalid ticket ID'),
-  counterId: z.string().min(1, 'Counter ID is required'),
-  notes: z.string().max(255).optional(),
+  ticketId: z.string().uuid('Mã vé hàng đợi không hợp lệ'),
+  counterId: z.string().min(1, 'Mã quầy giao dịch là bắt buộc'),
+  notes: z.string().max(255, 'Ghi chú không được vượt quá 255 ký tự').optional(),
 });
 
 export type BookQueueTicketInput = z.infer<typeof BookQueueTicketSchema>;
