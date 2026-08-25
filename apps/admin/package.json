@@ -8,9 +8,9 @@
     "preview": "vite preview"
   },
   "dependencies": {
-    "@aquaflow/shared": "workspace:*",
-    "@aquaflow/types": "workspace:*",
-    "@aquaflow/validation": "workspace:*"
+    "@aquaflow/shared": "*",
+    "@aquaflow/types": "*",
+    "@aquaflow/validation": "*"
   },
   "devDependencies": {
     "typescript": "^5.5.4",

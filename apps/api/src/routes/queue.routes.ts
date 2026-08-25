@@ -1,5 +1,5 @@
 import { Router } from 'express';
-import { CreateQueueTicketSchema, CallNextTicketSchema, CompleteTicketSchema } from '@aquaflow/validation';
+import { BookQueueTicketSchema, CallNextTicketSchema, CompleteTicketSchema } from '@aquaflow/validation';
 import { validateBody } from '../middlewares/validate.middleware.js';
 import { authenticate, authorizeRoles, AuthenticatedRequest } from '../middlewares/auth.middleware.js';
 import { QueueEngine } from '../services/QueueEngine.js';
@@ -8,7 +8,7 @@ export function createQueueRouter(queueEngine: QueueEngine): Router {
   const router = Router();
 
   // POST /api/v1/queue/tickets (Citizen creates ticket)
-  router.post('/tickets', authenticate, validateBody(CreateQueueTicketSchema), async (req: AuthenticatedRequest, res, next) => {
+  router.post('/tickets', authenticate, validateBody(BookQueueTicketSchema), async (req: AuthenticatedRequest, res, next) => {
     try {
       const userId = req.user?.id || 'usr-zalo-8891';
       const { branchId, serviceType, customerName, phone } = req.body;

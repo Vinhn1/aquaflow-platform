@@ -2,16 +2,18 @@
   "name": "@aquaflow/api",
   "version": "0.1.0",
   "private": true,
+  "type": "module",
   "main": "./dist/server.js",
   "scripts": {
     "dev": "tsx watch src/server.ts",
     "build": "tsc",
-    "start": "node dist/server.js"
+    "start": "node dist/server.js",
+    "test": "tsx --test test/**/*.test.ts"
   },
   "dependencies": {
-    "@aquaflow/shared": "workspace:*",
-    "@aquaflow/types": "workspace:*",
-    "@aquaflow/validation": "workspace:*",
+    "@aquaflow/shared": "*",
+    "@aquaflow/types": "*",
+    "@aquaflow/validation": "*",
     "cors": "^2.8.5",
     "dotenv": "^16.4.5",
     "express": "^4.19.2",
