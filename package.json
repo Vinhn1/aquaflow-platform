@@ -8,9 +8,12 @@
     "packages/*"
   ],
   "scripts": {
-    "build": "echo \"Build pipeline will be configured in Phase 6\"",
-    "test": "echo \"Tests will be executed in Phase 7\"",
-    "lint": "echo \"Linting will be configured in Phase 6\""
+    "dev:mini-app": "npm --prefix apps/mini-app run dev",
+    "dev:api": "npm --prefix apps/api run dev",
+    "dev:admin": "npm --prefix apps/admin run dev",
+    "build:mini-app": "npm --prefix apps/mini-app run build",
+    "build:api": "npm --prefix apps/api run build",
+    "test:api": "npm --prefix apps/api test"
   },
   "keywords": [
     "water-utility",
