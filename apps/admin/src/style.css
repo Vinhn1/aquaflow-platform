@@ -1,14 +1,16 @@
+@import './theme/tokens.css';
+
 :root {
-  --admin-primary: #004B87;
-  --admin-accent: #0B6BCB;
-  --admin-bg: #F1F5F9;
-  --admin-surface: #FFFFFF;
-  --admin-border: #CBD5E1;
-  --admin-text: #0F172A;
-  --admin-muted: #64748B;
-  --admin-success: #16A34A;
-  --admin-warning: #D97706;
-  --admin-danger: #DC2626;
+  --admin-primary: var(--cawaco-deep-navy);
+  --admin-accent: var(--cawaco-primary);
+  --admin-bg: var(--color-bg-app);
+  --admin-surface: var(--color-surface-card);
+  --admin-border: var(--color-border-subtle);
+  --admin-text: var(--color-text-main);
+  --admin-muted: var(--color-text-muted);
+  --admin-success: var(--color-success);
+  --admin-warning: var(--color-warning);
+  --admin-danger: var(--color-danger);
 }
 
 * {
@@ -18,7 +20,7 @@
 }
 
 body {
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  font-family: var(--font-family-base);
   background-color: var(--admin-bg);
   color: var(--admin-text);
   min-height: 100vh;
