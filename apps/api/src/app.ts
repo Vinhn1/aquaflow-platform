@@ -2,11 +2,17 @@ import express, { Express } from 'express';
 import cors from 'cors';
 import { errorHandler } from './middlewares/error.middleware.js';
 
-// Adapters
+// Adapters Mock
 import { MockCustomerAdapter } from './adapters/MockCustomerAdapter.js';
 import { MockInvoiceAdapter } from './adapters/MockInvoiceAdapter.js';
 import { MockPaymentAdapter } from './adapters/MockPaymentAdapter.js';
 import { MockQueueAdapter } from './adapters/MockQueueAdapter.js';
+
+// Adapters Real PostgreSQL (Prisma)
+import { PrismaCustomerAdapter } from './adapters/PrismaCustomerAdapter.js';
+import { PrismaInvoiceAdapter } from './adapters/PrismaInvoiceAdapter.js';
+import { PrismaPaymentAdapter } from './adapters/PrismaPaymentAdapter.js';
+import { PrismaQueueAdapter } from './adapters/PrismaQueueAdapter.js';
 
 // Services
 import { AuthService } from './services/AuthService.js';
@@ -33,13 +39,19 @@ export function createApp(): Express {
   app.use(cors());
   app.use(express.json());
 
-  // Instantiate Adapters
-  const customerAdapter = new MockCustomerAdapter();
-  const invoiceAdapter = new MockInvoiceAdapter();
-  const paymentAdapter = new MockPaymentAdapter();
-  const queueAdapter = new MockQueueAdapter();
+  // Kiem tra co su dung Mock khong (Mac dinh dung Database that neu MOCK_CAWACO_API khong phai true)
+  const isMock = process.env.MOCK_CAWACO_API === 'true';
+  console.log(
+    `[AquaFlow CAWACO API] Che do Adapter: ${isMock ? 'MOCK IN-MEMORY' : 'REAL POSTGRESQL PRISMA'}`,
+  );
 
-  // Instantiate Services
+  // Khoi tao Adapters theo kien truc Ports & Adapters
+  const customerAdapter = isMock ? new MockCustomerAdapter() : new PrismaCustomerAdapter();
+  const invoiceAdapter = isMock ? new MockInvoiceAdapter() : new PrismaInvoiceAdapter();
+  const paymentAdapter = isMock ? new MockPaymentAdapter() : new PrismaPaymentAdapter();
+  const queueAdapter = isMock ? new MockQueueAdapter() : new PrismaQueueAdapter();
+
+  // Khoi tao Services
   const authService = new AuthService();
   const customerService = new CustomerService(customerAdapter);
   const billingService = new BillingService(invoiceAdapter);
@@ -47,11 +59,12 @@ export function createApp(): Express {
   const queueEngine = new QueueEngine(queueAdapter);
   const complaintService = new ComplaintService();
 
-  // Health Check
+  // Health Check Endpoint
   app.get('/health', (req, res) => {
     res.json({
       status: 'UP',
       service: 'AquaFlow CAWACO API',
+      adapterMode: isMock ? 'MOCK' : 'REAL_POSTGRESQL',
       timestamp: new Date().toISOString(),
       version: '1.0.0',
     });

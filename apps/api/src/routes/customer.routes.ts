@@ -21,6 +21,29 @@ export function createCustomerRouter(customerService: CustomerService): Router {
     }
   });
 
+  // GET /api/v1/customers/:customerCode (Tra cuu danh bo)
+  router.get('/:customerCode', async (req, res, next) => {
+    try {
+      const { customerCode } = req.params;
+      const customer = await customerService.findByCode(customerCode);
+      if (!customer) {
+        return res.status(404).json({
+          success: false,
+          error: {
+            code: 'CUSTOMER_NOT_FOUND',
+            message: `Không tìm thấy mã danh bộ ${customerCode} trên hệ thống CAWACO`,
+          },
+        });
+      }
+      return res.json({
+        success: true,
+        data: customer,
+      });
+    } catch (error) {
+      next(error);
+    }
+  });
+
   // POST /api/v1/customers/link
   router.post('/link', authenticate, validateBody(LinkCustomerMeterSchema), async (req: AuthenticatedRequest, res, next) => {
     try {

@@ -40,6 +40,10 @@ export class CustomerService {
 
   constructor(private readonly customerPort: ICustomerPort) {}
 
+  async findByCode(customerCode: string): Promise<CustomerDto | null> {
+    return this.customerPort.findByCustomerCode(customerCode);
+  }
+
   async getUserMeters(userId: string): Promise<UserMeterRecord[]> {
     return this.userMeters.filter((m) => m.userId === userId);
   }
