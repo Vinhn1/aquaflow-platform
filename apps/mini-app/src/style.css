@@ -993,3 +993,20 @@ body {
   cursor: pointer;
 }
 
+@keyframes shimmer {
+  0% {
+    opacity: 0.4;
+  }
+  50% {
+    opacity: 0.85;
+  }
+  100% {
+    opacity: 0.4;
+  }
+}
+
+.skeleton-shimmer {
+  animation: shimmer 1.5s infinite ease-in-out;
+}
+
+
