@@ -1,4 +1,5 @@
 import { MockUser, MockLinkedMeter, MockInvoice, MockNews, MockBranch, MockQueueTicket } from './types';
+import { MiniAppAuthService } from './services/auth.js';
 
 // State Management
 const state = {
@@ -1262,10 +1263,65 @@ function renderMainContent() {
 }
 
 // App Initialization
-function initApp() {
-  renderHeader();
-  renderBottomNav();
-  renderMainContent();
+function ensureAppStructure() {
+  let appEl = document.getElementById('app');
+  if (!appEl) {
+    appEl = document.createElement('div');
+    appEl.id = 'app';
+    appEl.className = 'mobile-container';
+    document.body.appendChild(appEl);
+  }
+
+  if (!document.getElementById('header-container')) {
+    const header = document.createElement('header');
+    header.id = 'header-container';
+    appEl.appendChild(header);
+  }
+
+  if (!document.getElementById('main-content')) {
+    const main = document.createElement('main');
+    main.id = 'main-content';
+    main.className = 'content-scrollable';
+    appEl.appendChild(main);
+  }
+
+  if (!document.getElementById('bottom-nav-container')) {
+    const nav = document.createElement('nav');
+    nav.id = 'bottom-nav-container';
+    appEl.appendChild(nav);
+  }
+
+  if (!document.getElementById('modal-container')) {
+    const modal = document.createElement('div');
+    modal.id = 'modal-container';
+    modal.className = 'modal-overlay hidden';
+    appEl.appendChild(modal);
+  }
 }
 
-window.addEventListener('DOMContentLoaded', initApp);
+async function initApp() {
+  try {
+    ensureAppStructure();
+
+    // Xac thuc Zalo OAuth nguoi dung that
+    const { user } = await MiniAppAuthService.initZaloAuth();
+    if (user) {
+      state.currentUser = user as any;
+    }
+
+    renderHeader();
+    renderBottomNav();
+    renderMainContent();
+  } catch (err: any) {
+    console.error('Lỗi khởi tạo Mini App:', err);
+  }
+}
+
+if (document.readyState === 'loading') {
+  window.addEventListener('DOMContentLoaded', () => {
+    initApp();
+  });
+} else {
+  initApp();
+}
+

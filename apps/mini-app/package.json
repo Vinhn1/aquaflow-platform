@@ -10,7 +10,8 @@
   "dependencies": {
     "@aquaflow/shared": "*",
     "@aquaflow/types": "*",
-    "@aquaflow/validation": "*"
+    "@aquaflow/validation": "*",
+    "zmp-sdk": "^2.53.0"
   },
   "devDependencies": {
     "typescript": "^5.5.4",
