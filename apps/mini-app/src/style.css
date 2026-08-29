@@ -63,15 +63,22 @@ body {
   }
 }
 
-/* Header */
+/* Header — Deep Maritime gradient */
 .app-header {
-  background: linear-gradient(135deg, var(--color-primary-dark), var(--color-primary));
+  background: linear-gradient(
+    160deg,
+    var(--cawaco-deep-navy) 0%,
+    hsl(204, 78%, 24%) 55%,
+    hsl(204, 60%, 36%) 100%
+  );
   color: #ffffff;
-  padding: 16px 16px 18px;
-  border-bottom-left-radius: var(--radius-lg);
-  border-bottom-right-radius: var(--radius-lg);
-  box-shadow: 0 4px 12px rgba(11, 107, 203, 0.2);
+  padding: 14px 16px 16px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  box-shadow: 0 2px 16px rgba(0, 59, 111, 0.28);
   z-index: 10;
+  flex-shrink: 0;
 }
 
 .header-top {
@@ -130,6 +137,12 @@ body {
   padding: 16px 16px 80px;
 }
 
+/* Chế độ bản đồ — xóa padding để map chiếm full area */
+.content-scrollable.content-map-mode {
+  padding: 0;
+  overflow: hidden;
+}
+
 /* Cards */
 .card {
   background-color: var(--color-surface);
@@ -140,9 +153,10 @@ body {
   border: 1px solid var(--color-border);
 }
 
-/* Hero Bill Card */
+/* Hero Bill Card — border-left màu CAWACO primary đúng brand */
 .bill-hero-card {
-  border-left: 4px solid var(--color-accent);
+  border-left: 4px solid var(--cawaco-primary);
+  background: linear-gradient(to right, hsl(204, 78%, 99%), #ffffff);
 }
 
 .bill-header {
@@ -255,57 +269,64 @@ body {
   text-decoration: underline;
 }
 
+/* Bento Quick Actions — premium sizing */
 .bento-grid {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
-  gap: 12px;
+  gap: 10px;
   margin-bottom: 20px;
 }
 
 .bento-item {
   background: var(--color-surface);
-  border: 1px solid var(--color-border);
-  border-radius: var(--radius-md);
-  padding: 14px 8px;
+  border: 1px solid var(--color-border-subtle);
+  border-radius: var(--radius-lg);
+  padding: 16px 8px 14px;
   display: flex;
   flex-direction: column;
   align-items: center;
   text-align: center;
-  gap: 8px;
+  gap: 9px;
   cursor: pointer;
-  transition: all 0.2s;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.02);
+  transition: all 0.18s ease;
+  box-shadow: 0 2px 8px rgba(0, 59, 111, 0.05);
+}
+
+.bento-item:hover {
+  box-shadow: 0 4px 14px rgba(0, 59, 111, 0.10);
+  transform: translateY(-1px);
 }
 
 .bento-item:active {
   transform: scale(0.95);
-  background-color: var(--color-primary-light);
+  background-color: var(--cawaco-primary-subtle);
 }
 
 .bento-icon {
-  width: 44px;
-  height: 44px;
-  border-radius: var(--radius-md);
+  width: 50px;
+  height: 50px;
+  border-radius: 14px;
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 14px;
-  font-weight: 700;
+  flex-shrink: 0;
 }
 
-.icon-blue { background: #E6F4FF; color: #0B6BCB; }
-.icon-cyan { background: #E6F7FF; color: #00A3C4; }
-.icon-amber { background: #FFF7E6; color: #E67E22; }
-.icon-green { background: #E8F8F0; color: #2ECC71; }
-.icon-purple { background: #F3E8FF; color: #9333EA; }
-.icon-red { background: #FEE2E2; color: #EF4444; }
-.icon-indigo { background: #EEF2FF; color: #4F46E5; }
+/* Category icon colors — CAWACO brand spectrum */
+.icon-blue   { background: #DBEAFE; color: #1D4ED8; }
+.icon-cyan   { background: #CFFAFE; color: #0E7490; }
+.icon-amber  { background: #FEF3C7; color: #B45309; }
+.icon-green  { background: #DCFCE7; color: #15803D; }
+.icon-purple { background: #F3E8FF; color: #7E22CE; }
+.icon-red    { background: #FEE2E2; color: #B91C1C; }
+.icon-indigo { background: #E0E7FF; color: #4338CA; }
+.icon-teal   { background: var(--cawaco-teal-subtle); color: var(--cawaco-teal); }
 
 .bento-label {
   font-size: 12px;
-  font-weight: 600;
-  color: var(--color-text-main);
-  line-height: 1.2;
+  font-weight: 700;
+  color: var(--color-text-body);
+  line-height: 1.25;
 }
 
 /* Auto-play Image Slider / Carousel */
@@ -327,8 +348,8 @@ body {
 .slide-item {
   flex: 0 0 100%;
   min-width: 100%;
-  height: 155px;
-  padding: 16px 18px;
+  height: 160px;
+  padding: 18px;
   color: #ffffff;
   display: flex;
   flex-direction: column;
@@ -336,6 +357,45 @@ body {
   position: relative;
   cursor: pointer;
   user-select: none;
+  overflow: hidden;
+}
+
+/* Slide dùng ảnh banner thật CAWACO */
+.slide-banner-image {
+  padding: 0;
+  height: 160px;
+  position: relative;
+  overflow: hidden;
+  color: #ffffff;
+}
+
+.slide-banner-image img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: center;
+  display: block;
+}
+
+/* Overlay gradient mờ cho banner ảnh — đọc được CTA */
+.slide-banner-image .slide-image-overlay {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    to right,
+    rgba(0, 59, 111, 0.55) 0%,
+    rgba(0, 59, 111, 0.15) 60%,
+    transparent 100%
+  );
+}
+
+.slide-banner-image .slide-image-content {
+  position: absolute;
+  bottom: 16px;
+  left: 18px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
 }
 
 .slide-blue {
@@ -553,10 +613,10 @@ body {
   color: var(--color-text-muted);
 }
 
-/* Live Counter Card */
+/* Live Counter Card — dùng token màu nhất quán */
 .live-counter-card {
-  background: linear-gradient(135deg, #F0FDF4, #DCFCE7);
-  border: 1px solid #86EFAC;
+  background: linear-gradient(135deg, var(--color-success-subtle), #bbf7d0);
+  border: 1px solid #86efac;
   border-radius: var(--radius-lg);
   padding: 14px 16px;
   margin-bottom: 18px;
@@ -565,10 +625,10 @@ body {
   align-items: center;
 }
 
-/* Ticker Notice */
+/* Ticker Notice — dùng warning token */
 .ticker-card {
-  background: var(--color-accent-light);
-  border-left: 4px solid var(--color-accent);
+  background: var(--color-warning-subtle);
+  border-left: 4px solid var(--color-warning);
   padding: 10px 12px;
   border-radius: var(--radius-md);
   display: flex;
@@ -576,6 +636,7 @@ body {
   gap: 8px;
   font-size: 12px;
   margin-bottom: 16px;
+  color: var(--color-text-body);
 }
 
 /* Multi-channel Customer Care Support Card */
@@ -737,38 +798,62 @@ body {
   margin-bottom: 10px;
 }
 
-/* Bottom Navigation */
+/* Bottom Navigation — 5 tabs + active underline indicator */
 .bottom-nav {
   position: absolute;
   bottom: 0;
   left: 0;
   right: 0;
-  height: 64px;
+  height: 62px;
   background: #ffffff;
-  border-top: 1px solid var(--color-border);
+  border-top: 1px solid var(--color-border-subtle);
   display: flex;
   justify-content: space-around;
-  align-items: center;
+  align-items: stretch;
   z-index: 50;
   padding-bottom: env(safe-area-inset-bottom);
+  box-shadow: 0 -2px 12px rgba(0, 59, 111, 0.06);
 }
 
+/* Dùng nav-item (class trong App.tsx) */
+.nav-item,
 .nav-tab {
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 4px;
+  justify-content: center;
+  gap: 3px;
   color: var(--color-text-muted);
-  font-size: 11px;
+  font-size: 10px;
   font-weight: 500;
   cursor: pointer;
   flex: 1;
-  padding: 8px 0;
+  padding: 6px 0;
+  position: relative;
+  border-top: 2px solid transparent;
+  transition: color 0.18s ease, border-color 0.18s ease;
 }
 
+.nav-item .nav-icon,
+.nav-tab .nav-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+}
+
+.nav-item .nav-label,
+.nav-tab .nav-label {
+  font-size: 10px;
+  line-height: 1;
+}
+
+.nav-item.active,
 .nav-tab.active {
-  color: var(--color-primary);
+  color: var(--cawaco-primary);
   font-weight: 700;
+  border-top-color: var(--cawaco-primary);
 }
 
 /* Modals */
@@ -1009,4 +1094,48 @@ body {
   animation: shimmer 1.5s infinite ease-in-out;
 }
 
+/* ====================================================
+ * Leaflet Map — Override styles cho Mobile Container
+ * ==================================================== */
 
+/* Đảm bảo Leaflet container có đủ chiều cao */
+.leaflet-container {
+  width: 100% !important;
+  height: 100% !important;
+  min-height: 320px;
+  font-family: var(--font-family-base) !important;
+  border-radius: 0;
+}
+
+/* Fix z-index Leaflet controls không bị che bởi bottom-nav */
+.leaflet-control-zoom {
+  border: none !important;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.15) !important;
+}
+
+.leaflet-control-zoom a {
+  color: var(--cawaco-deep-navy) !important;
+  font-weight: 700 !important;
+  border: none !important;
+  border-bottom: 1px solid var(--color-border-subtle) !important;
+}
+
+.leaflet-control-zoom a:last-child {
+  border-bottom: none !important;
+}
+
+/* Attribution link nhỏ hơn trên mobile */
+.leaflet-control-attribution {
+  font-size: 10px !important;
+  background: rgba(255,255,255,0.8) !important;
+  padding: 2px 6px !important;
+}
+
+/* MapPage layout — full height trong content-scrollable */
+.content-scrollable .map-page-wrapper {
+  height: calc(100vh - 62px - 66px);
+  display: flex;
+  flex-direction: column;
+  margin: -16px;
+  margin-bottom: -80px;
+}

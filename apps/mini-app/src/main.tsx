@@ -2,6 +2,7 @@ import React from 'react';
 import { createRoot } from 'react-dom/client';
 import { App } from './App.js';
 import 'zmp-ui/zaui.css';
+import 'leaflet/dist/leaflet.css';
 import './style.css';
 
 /**

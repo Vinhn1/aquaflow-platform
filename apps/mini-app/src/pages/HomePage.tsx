@@ -23,20 +23,20 @@ export const HomePage: React.FC<HomePageProps> = ({ onNavigate, onOpenVietQr }) 
 
   const activeInvoice = invoices && invoices.length > 0 ? invoices[0] : null;
 
-  // Banner Slides
+  // Banner Slides — slide 1 dùng banner.png CAWACO thật
   const slides = [
     {
       id: 's1',
-      theme: 'slide-blue',
+      useBannerImage: true,  // Slide 1 dùng ảnh thật
       tag: 'Thanh toán trực tuyến',
       title: 'Thanh toán nước qua VietQR',
-      desc: 'Quét mã tiện lợi, gạch nợ tự động trong 5 giây, nhận hóa đơn điện tử.',
       cta: 'Thanh toán ngay',
       action: () => onNavigate('INVOICES'),
     },
     {
       id: 's2',
       theme: 'slide-cyan',
+      useBannerImage: false,
       tag: 'Tiện ích quầy 204 Quang Trung',
       title: 'Bốc số trực tuyến thông minh',
       desc: 'Lấy số thứ tự điện tử trước khi đến trụ sở, theo dõi vị trí hàng đợi trực tiếp.',
@@ -46,6 +46,7 @@ export const HomePage: React.FC<HomePageProps> = ({ onNavigate, onOpenVietQr }) 
     {
       id: 's3',
       theme: 'slide-amber',
+      useBannerImage: false,
       tag: 'Tiếp nhận 24/7',
       title: 'Phản ánh & Báo sự cố nước 24/7',
       desc: 'Gửi phản ánh chất lượng nước, rò rỉ đường ống kèm vị trí GPS và ảnh hiện trường.',
@@ -81,19 +82,38 @@ export const HomePage: React.FC<HomePageProps> = ({ onNavigate, onOpenVietQr }) 
 
       {/* 2. Banner Slider */}
       <div className="slider-container">
+        {/* Slider track — hỗ trợ cả nh 1 (slide banner ảnh thật) và slide màu */}
         <div className="slider-track" style={{ transform: `translateX(-${slideIndex * 100}%)` }}>
           {slides.map((s) => (
-            <div key={s.id} className={`slide-item ${s.theme}`} onClick={s.action}>
-              <span className="slide-tag">{s.tag}</span>
-              <div className="slide-title">{s.title}</div>
-              <div className="slide-desc">{s.desc}</div>
-              <div className="slide-cta">
-                {s.cta}
-                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                  <polyline points="9 18 15 12 9 6" />
-                </svg>
+            s.useBannerImage ? (
+              /* Slide 1 dùng banner.png CAWACO thật */
+              <div key={s.id} className="slide-item slide-banner-image" onClick={s.action}>
+                <img src="/images/banner.png" alt="CAWACO — Vì nguồn nước sạch cho cộng đồng" />
+                <div className="slide-image-overlay" />
+                <div className="slide-image-content">
+                  <span className="slide-tag">{s.tag}</span>
+                  <div className="slide-cta" style={{ marginTop: 0 }}>
+                    {s.cta}
+                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                      <polyline points="9 18 15 12 9 6" />
+                    </svg>
+                  </div>
+                </div>
               </div>
-            </div>
+            ) : (
+              /* Slide 2, 3 dùng gradient màu */
+              <div key={s.id} className={`slide-item ${s.theme}`} onClick={s.action}>
+                <span className="slide-tag">{s.tag}</span>
+                <div className="slide-title">{s.title}</div>
+                <div className="slide-desc">{s.desc}</div>
+                <div className="slide-cta">
+                  {s.cta}
+                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                    <polyline points="9 18 15 12 9 6" />
+                  </svg>
+                </div>
+              </div>
+            )
           ))}
         </div>
         <div className="slider-dots">
@@ -268,16 +288,16 @@ export const HomePage: React.FC<HomePageProps> = ({ onNavigate, onOpenVietQr }) 
         </div>
       </div>
 
-      {/* 5. Live Counter Quầy Giao Dịch 204 Quang Trung */}
+      {/* 5. Live Counter Quầy Giao Dịch 204 Quang Trung — dùng tokens màu nhất quán */}
       <div className="live-counter-card">
         <div>
-          <div style={{ fontSize: '11px', fontWeight: '700', color: '#166534', textTransform: 'uppercase' }}>
+          <div style={{ fontSize: '11px', fontWeight: '700', color: 'var(--color-success)', textTransform: 'uppercase' }}>
             Quầy Giao Dịch Trực Tiếp
           </div>
-          <div style={{ fontSize: '14px', fontWeight: '700', color: '#14532D', marginTop: '2px' }}>
+          <div style={{ fontSize: '14px', fontWeight: '700', color: 'var(--cawaco-deep-navy)', marginTop: '2px' }}>
             Trụ sở 204 Quang Trung
           </div>
-          <div style={{ fontSize: '12px', color: '#15803D', marginTop: '2px' }}>
+          <div style={{ fontSize: '12px', color: 'var(--color-success)', marginTop: '2px' }}>
             Đang phục vụ: <strong>4 quầy</strong> | Đang chờ: <strong>3 người</strong> (~12 phút)
           </div>
         </div>

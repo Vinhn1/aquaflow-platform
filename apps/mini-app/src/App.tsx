@@ -4,6 +4,7 @@ import { InvoicePage } from './pages/InvoicePage.js';
 import { QueuePage } from './pages/QueuePage.js';
 import { ComplaintPage } from './pages/ComplaintPage.js';
 import { NewsPage } from './pages/NewsPage.js';
+import { MapPage } from './pages/MapPage.js';
 import { MiniAppAuthService, UserProfile } from './services/auth.js';
 
 export type TabType = 'HOME' | 'INVOICES' | 'QUEUE' | 'COMPLAINTS' | 'NEWS' | 'MAP' | 'ACCOUNT';
@@ -26,17 +27,25 @@ export const App: React.FC = () => {
 
   return (
     <div className="mobile-container">
-      {/* 1. Header co dinh */}
+      {/* 1. Header cố định — logo CAWACO thật */}
       <header className="app-header">
-        <div className="brand-group">
-          <div className="logo-badge">
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
-              <path d="M12 2.69l5.66 5.66a8 8 0 1 1-11.31 0z" />
-            </svg>
-          </div>
+        <div className="brand-group" style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+          {/* Logo CAWACO thật từ assets/brand/logo.jpg */}
+          <img
+            src="/brand/logo.jpg"
+            alt="Logo CAWACO"
+            style={{
+              width: '38px',
+              height: '38px',
+              borderRadius: '50%',
+              border: '2px solid rgba(255,255,255,0.85)',
+              objectFit: 'cover',
+              flexShrink: 0,
+            }}
+          />
           <div className="brand-info">
-            <span className="brand-name">CAWACO</span>
-            <span className="brand-sub">Cấp Nước Cà Mau</span>
+            <span className="brand-name" style={{ fontSize: '15px', fontWeight: '800', color: '#fff', display: 'block', lineHeight: 1.1 }}>CAWACO</span>
+            <span className="brand-sub" style={{ fontSize: '11px', color: 'rgba(255,255,255,0.8)', display: 'block' }}>Cấp Nước Cà Mau</span>
           </div>
         </div>
 
@@ -68,7 +77,7 @@ export const App: React.FC = () => {
       </header>
 
       {/* 2. Noi dung man hinh theo Tab */}
-      <main className="content-scrollable">
+      <main className={`content-scrollable${activeTab === 'MAP' ? ' content-map-mode' : ''}`}>
         {activeTab === 'HOME' && (
           <HomePage onNavigate={setActiveTab} onOpenVietQr={setVietQrInvoice} />
         )}
@@ -78,22 +87,7 @@ export const App: React.FC = () => {
         {activeTab === 'QUEUE' && <QueuePage />}
         {activeTab === 'COMPLAINTS' && <ComplaintPage />}
         {activeTab === 'NEWS' && <NewsPage />}
-        {activeTab === 'MAP' && (
-          <div style={{ paddingBottom: '30px' }}>
-            <div className="section-title">Điểm giao dịch Cấp Nước Cà Mau</div>
-            <div className="card" style={{ marginBottom: '12px' }}>
-              <div style={{ fontSize: '14px', fontWeight: '700', color: 'var(--cawaco-deep-navy)' }}>
-                Trụ sở chính Công ty CP Cấp Nước Cà Mau
-              </div>
-              <div style={{ fontSize: '12px', color: 'var(--color-text-muted)', margin: '6px 0' }}>
-                Số 204, đường Quang Trung, Khóm 26, Phường Tân Thành, TP. Cà Mau
-              </div>
-              <div style={{ fontSize: '12px', color: 'var(--cawaco-teal)' }}>
-                Điện thoại: 0290 3836 360 | Giờ làm việc: 07:30 - 17:00 (T2 - T6)
-              </div>
-            </div>
-          </div>
-        )}
+        {activeTab === 'MAP' && <MapPage />}
         {activeTab === 'ACCOUNT' && (
           <div style={{ paddingBottom: '30px' }}>
             <div className="section-title">Tài khoản & Danh bạ đồng hồ</div>
@@ -152,14 +146,11 @@ export const App: React.FC = () => {
         )}
       </main>
 
-      {/* 3. Bottom Navigation Bar */}
+      {/* 3. Bottom Navigation Bar — 5 tabs */}
       <nav className="bottom-nav">
-        <div
-          className={`nav-item ${activeTab === 'HOME' ? 'active' : ''}`}
-          onClick={() => setActiveTab('HOME')}
-        >
+        <div className={`nav-item ${activeTab === 'HOME' ? 'active' : ''}`} onClick={() => setActiveTab('HOME')}>
           <div className="nav-icon">
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill={activeTab === 'HOME' ? 'var(--cawaco-primary)' : 'none'} stroke="currentColor" strokeWidth="2">
               <path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" />
               <polyline points="9 22 9 12 15 12 15 22" />
             </svg>
@@ -167,10 +158,7 @@ export const App: React.FC = () => {
           <span className="nav-label">Trang chủ</span>
         </div>
 
-        <div
-          className={`nav-item ${activeTab === 'INVOICES' ? 'active' : ''}`}
-          onClick={() => setActiveTab('INVOICES')}
-        >
+        <div className={`nav-item ${activeTab === 'INVOICES' ? 'active' : ''}`} onClick={() => setActiveTab('INVOICES')}>
           <div className="nav-icon">
             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
               <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
@@ -182,10 +170,7 @@ export const App: React.FC = () => {
           <span className="nav-label">Hóa đơn</span>
         </div>
 
-        <div
-          className={`nav-item ${activeTab === 'QUEUE' ? 'active' : ''}`}
-          onClick={() => setActiveTab('QUEUE')}
-        >
+        <div className={`nav-item ${activeTab === 'QUEUE' ? 'active' : ''}`} onClick={() => setActiveTab('QUEUE')}>
           <div className="nav-icon">
             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
               <rect x="3" y="4" width="18" height="18" rx="2" ry="2" />
@@ -197,24 +182,18 @@ export const App: React.FC = () => {
           <span className="nav-label">Bốc số</span>
         </div>
 
-        <div
-          className={`nav-item ${activeTab === 'COMPLAINTS' ? 'active' : ''}`}
-          onClick={() => setActiveTab('COMPLAINTS')}
-        >
+        <div className={`nav-item ${activeTab === 'MAP' ? 'active' : ''}`} onClick={() => setActiveTab('MAP')}>
           <div className="nav-icon">
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-              <path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z" />
-              <line x1="12" y1="9" x2="12" y2="13" />
-              <line x1="12" y1="17" x2="12.01" y2="17" />
+            {/* Map Pin SVG icon */}
+            <svg width="20" height="20" viewBox="0 0 24 24" fill={activeTab === 'MAP' ? 'var(--cawaco-primary)' : 'none'} stroke="currentColor" strokeWidth="2">
+              <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z" />
+              <circle cx="12" cy="10" r="3" fill={activeTab === 'MAP' ? '#fff' : 'none'} />
             </svg>
           </div>
-          <span className="nav-label">Báo sự cố</span>
+          <span className="nav-label">Bản đồ</span>
         </div>
 
-        <div
-          className={`nav-item ${activeTab === 'NEWS' ? 'active' : ''}`}
-          onClick={() => setActiveTab('NEWS')}
-        >
+        <div className={`nav-item ${activeTab === 'NEWS' ? 'active' : ''}`} onClick={() => setActiveTab('NEWS')}>
           <div className="nav-icon">
             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
               <path d="M4 22h16a2 2 0 0 0 2-2V4a2 2 0 0 0-2-2H8a2 2 0 0 0-2 2v16a2 2 0 0 1-2 2Zm0 0a2 2 0 0 1-2-2v-9c0-1.1.9-2 2-2h2" />
