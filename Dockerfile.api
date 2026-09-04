@@ -32,6 +32,7 @@ RUN addgroup -S appgroup && adduser -S appuser -G appgroup
 COPY --chown=appuser:appgroup --from=builder /app/package*.json ./
 COPY --chown=appuser:appgroup --from=builder /app/node_modules ./node_modules
 COPY --chown=appuser:appgroup --from=builder /app/packages ./packages
+COPY --chown=appuser:appgroup --from=builder /app/apps/api/src ./apps/api/src
 COPY --chown=appuser:appgroup --from=builder /app/apps/api/dist ./apps/api/dist
 COPY --chown=appuser:appgroup --from=builder /app/apps/api/package.json ./apps/api/package.json
 COPY --chown=appuser:appgroup --from=builder /app/apps/api/prisma ./apps/api/prisma
@@ -40,4 +41,4 @@ USER appuser
 
 EXPOSE 3000
 
-CMD ["node", "apps/api/dist/server.js"]
+CMD ["npx", "tsx", "apps/api/src/server.ts"]

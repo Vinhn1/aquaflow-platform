@@ -27,7 +27,7 @@ echo "[AquaFlow Deploy] 5. Khoi dong toan bo he thong (API + Admin Portal)..."
 docker compose -f docker-compose.prod.yml --env-file .env.production up -d --build
 
 echo "[AquaFlow Deploy] 6. Kiem tra trang thai he thong..."
-docker compose -f docker-compose.prod.yml ps
+docker compose -f docker-compose.prod.yml --env-file .env.production ps
 
 echo "=========================================================================="
 echo " TRIEN KHAI HOAN TAT!"
