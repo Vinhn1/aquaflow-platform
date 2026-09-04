@@ -19,8 +19,8 @@ echo "[AquaFlow Deploy] 3. Doi PostgreSQL khoi dong hoan tat..."
 sleep 5
 
 echo "[AquaFlow Deploy] 4. Thuc thi Prisma Migration & Seed du lieu vao CSDL..."
-docker compose -f docker-compose.prod.yml --env-file .env.production run --rm api npx prisma migrate deploy
-docker compose -f docker-compose.prod.yml --env-file .env.production run --rm api npx tsx prisma/seed.ts
+docker compose -f docker-compose.prod.yml --env-file .env.production run --rm --user root api npx prisma migrate deploy --schema=apps/api/prisma/schema.prisma
+docker compose -f docker-compose.prod.yml --env-file .env.production run --rm --user root api npx tsx apps/api/prisma/seed.ts
 
 echo "[AquaFlow Deploy] 5. Khoi dong toan bo he thong (API + Admin Portal)..."
 docker compose -f docker-compose.prod.yml --env-file .env.production up -d --build
