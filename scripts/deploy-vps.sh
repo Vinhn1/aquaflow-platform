@@ -14,6 +14,7 @@ fi
 
 echo "[AquaFlow Deploy] 2. Build Docker images va khoi chay co so du lieu..."
 docker compose -f docker-compose.prod.yml --env-file .env.production up -d postgres
+docker compose -f docker-compose.prod.yml --env-file .env.production build api
 
 echo "[AquaFlow Deploy] 3. Doi PostgreSQL khoi dong hoan tat..."
 sleep 5
