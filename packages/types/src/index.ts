@@ -4,7 +4,7 @@ export * from './ports/IPaymentPort.js';
 export * from './ports/IQueuePort.js';
 export * from './ports/INotificationPort.js';
 
-export type UserRole = 'CITIZEN' | 'COUNTER_STAFF' | 'FIELD_TECHNICIAN' | 'ADMIN';
+export type UserRole = 'CITIZEN' | 'COUNTER_STAFF' | 'FIELD_TECHNICIAN' | 'ADMIN' | 'SUPER_ADMIN' | 'BRANCH_MANAGER';
 
 export type ComplaintCategory = 
   | 'PIPE_BURST_LEAK' 

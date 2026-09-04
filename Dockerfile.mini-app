@@ -13,7 +13,7 @@ RUN npm --prefix apps/mini-app run build
 # Nginx Static Server
 FROM nginx:alpine AS runner
 
-COPY --from=builder /app/apps/mini-app/dist /usr/share/nginx/html
+COPY --from=builder /app/apps/mini-app/www /usr/share/nginx/html
 
 EXPOSE 80
 

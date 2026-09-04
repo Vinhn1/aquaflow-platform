@@ -31,13 +31,25 @@ import { createQueueRouter } from './routes/queue.routes.js';
 import { createComplaintRouter } from './routes/complaint.routes.js';
 import { createNewsRouter } from './routes/news.routes.js';
 import { createBranchRouter } from './routes/branch.routes.js';
+import { createStaffRouter } from './routes/staff.routes.js';
+import { createAgentRouter } from './routes/agent.routes.js';
+import { createRegistrationRouter } from './routes/registration.routes.js';
+import { createSurveyRouter } from './routes/survey.routes.js';
+import { createFeedbackRouter } from './routes/feedback.routes.js';
+import { createNetworkRouter } from './routes/network.routes.js';
+import { createHandbookRouter } from './routes/handbook.routes.js';
+import { createAssistantRouter } from './routes/assistant.routes.js';
+import { createAdminStatsRouter } from './routes/admin-stats.routes.js';
+import { createZaloRouter } from './routes/zalo.routes.js';
+import { createMeterReadingRouter } from './routes/meter-reading.routes.js';
 
 export function createApp(): Express {
   const app = express();
 
   // Core Middlewares
   app.use(cors());
-  app.use(express.json());
+  app.use(express.json({ limit: '10mb' }));
+  app.use(express.urlencoded({ limit: '10mb', extended: true }));
 
   // Kiem tra co su dung Mock khong (Mac dinh dung Database that neu MOCK_CAWACO_API khong phai true)
   const isMock = process.env.MOCK_CAWACO_API === 'true';
@@ -79,6 +91,19 @@ export function createApp(): Express {
   app.use('/api/v1/complaints', createComplaintRouter(complaintService));
   app.use('/api/v1/news', createNewsRouter());
   app.use('/api/v1/branches', createBranchRouter());
+  app.use('/api/v1/admin/staff', createStaffRouter());
+
+  // Phân hệ 12 dịch vụ tiện ích mở rộng
+  app.use('/api/v1/agents', createAgentRouter());
+  app.use('/api/v1/registrations', createRegistrationRouter());
+  app.use('/api/v1/surveys', createSurveyRouter());
+  app.use('/api/v1/feedbacks', createFeedbackRouter());
+  app.use('/api/v1/network', createNetworkRouter());
+  app.use('/api/v1/handbook', createHandbookRouter());
+  app.use('/api/v1/assistant', createAssistantRouter());
+  app.use('/api/v1/admin/stats', createAdminStatsRouter());
+  app.use('/api/v1/zalo', createZaloRouter());
+  app.use('/api/v1/meter-readings', createMeterReadingRouter());
 
   // Global Error Handler
   app.use(errorHandler);

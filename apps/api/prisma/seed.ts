@@ -5,7 +5,7 @@ const prisma = new PrismaClient();
 async function main() {
   console.log('[CAWACO Seed] Bat dau khoi tao du lieu mau...');
 
-  // 1. Tao Chi nhanh tru so chinh CAWACO
+  // 1. Tao Cac Chi nhanh CAWACO
   const branch = await prisma.branch.upsert({
     where: { code: 'CM-HQ-01' },
     update: {},
@@ -19,9 +19,37 @@ async function main() {
       isActive: true,
     },
   });
-  console.log(`[CAWACO Seed] Da tao Chi nhanh: ${branch.name}`);
 
-  // 2. Tao Nguoi dung mau
+  await prisma.branch.upsert({
+    where: { code: 'CM-PGD-01' },
+    update: {},
+    create: {
+      code: 'CM-PGD-01',
+      name: 'Phòng Giao dịch Khách hàng Phường 5',
+      address: 'Số 45, đường Trần Hưng Đạo, Phường 5, TP. Cà Mau',
+      latitude: 9.1825,
+      longitude: 105.1558,
+      phone: '0290 3831 222',
+      isActive: true,
+    },
+  });
+
+  await prisma.branch.upsert({
+    where: { code: 'CM-PGD-02' },
+    update: {},
+    create: {
+      code: 'CM-PGD-02',
+      name: 'Chi nhánh Cấp nước Huyện Cái Nước',
+      address: 'Thị trấn Cái Nước, Huyện Cái Nước, Tỉnh Cà Mau',
+      latitude: 9.0123,
+      longitude: 105.0234,
+      phone: '0290 3888 999',
+      isActive: true,
+    },
+  });
+  console.log(`[CAWACO Seed] Da tao 3 Chi nhanh giao dich CAWACO`);
+
+  // 2. Tao Nguoi dung cong dan mau
   const user = await prisma.user.upsert({
     where: { phone: '0918234567' },
     update: {},
@@ -32,7 +60,89 @@ async function main() {
       role: 'CITIZEN',
     },
   });
-  console.log(`[CAWACO Seed] Da tao Nguoi dung: ${user.fullName}`);
+  console.log(`[CAWACO Seed] Da tao Nguoi dung cong dan: ${user.fullName}`);
+
+  // Helper hash password
+  const defaultPasswordHash = '8d969eef6ecad3c29a3a629280e686cf0c3f5d5a86aff3ca12020c923adc6c92'; // hash for '123456'
+
+  // 2b. Tao Cac Tai Khoan Can Bo Nhan Vien CAWACO (Staff Accounts)
+  await prisma.user.upsert({
+    where: { employeeCode: 'CW-ADMIN' },
+    update: {},
+    create: {
+      employeeCode: 'CW-ADMIN',
+      email: 'admin@cawaco.com.vn',
+      phone: '02903836360',
+      fullName: 'Quản Trị Viên Hệ Thống',
+      passwordHash: defaultPasswordHash,
+      role: 'SUPER_ADMIN',
+      branchId: branch.id,
+      isActive: true,
+    },
+  });
+
+  await prisma.user.upsert({
+    where: { employeeCode: 'CW-889' },
+    update: {},
+    create: {
+      employeeCode: 'CW-889',
+      email: 'tranvanb@cawaco.com.vn',
+      phone: '0918889889',
+      fullName: 'Trần Văn B',
+      passwordHash: defaultPasswordHash,
+      role: 'COUNTER_STAFF',
+      branchId: branch.id,
+      counterNumber: 1,
+      isActive: true,
+    },
+  });
+
+  await prisma.user.upsert({
+    where: { employeeCode: 'CW-890' },
+    update: {},
+    create: {
+      employeeCode: 'CW-890',
+      email: 'lethic@cawaco.com.vn',
+      phone: '0919998890',
+      fullName: 'Lê Thị C',
+      passwordHash: defaultPasswordHash,
+      role: 'COUNTER_STAFF',
+      branchId: branch.id,
+      counterNumber: 2,
+      isActive: true,
+    },
+  });
+
+  await prisma.user.upsert({
+    where: { employeeCode: 'CW-MGR01' },
+    update: {},
+    create: {
+      employeeCode: 'CW-MGR01',
+      email: 'truongphong@cawaco.com.vn',
+      phone: '0917778899',
+      fullName: 'Phạm Văn Trưởng Phòng',
+      passwordHash: defaultPasswordHash,
+      role: 'BRANCH_MANAGER',
+      branchId: branch.id,
+      isActive: true,
+    },
+  });
+
+  await prisma.user.upsert({
+    where: { employeeCode: 'CW-TECH01' },
+    update: {},
+    create: {
+      employeeCode: 'CW-TECH01',
+      email: 'kythuat@cawaco.com.vn',
+      phone: '0916665544',
+      fullName: 'Hoàng Văn Kỹ Thuật',
+      passwordHash: defaultPasswordHash,
+      role: 'FIELD_WORKER',
+      branchId: branch.id,
+      isActive: true,
+    },
+  });
+  console.log(`[CAWACO Seed] Da khoi tao 5 tai khoan can bo nhan vien CAWACO`);
 
   // 3. Tao Khach hang (Ma danh bo CM102938)
   const customer1 = await prisma.customer.upsert({
@@ -162,7 +272,250 @@ async function main() {
       isPublished: true,
     },
   });
-  console.log('[CAWACO Seed] Da tao thong bao cup nuoc mau');
+
+  await prisma.news.upsert({
+    where: { slug: 'huong-dan-thanh-toan-tien-nuoc-qua-vietqr' },
+    update: {},
+    create: {
+      title: 'Hướng dẫn thanh toán tiền nước trực tuyến qua VietQR và Zalo Mini App',
+      slug: 'huong-dan-thanh-toan-tien-nuoc-qua-vietqr',
+      summary: 'Khách hàng có thể dễ dàng thanh toán tiền nước mọi lúc mọi nơi thông qua quét mã VietQR tự động gạch nợ.',
+      content: 'Hướng dẫn các bước thanh toán tiền nước...',
+      category: 'ANNOUNCEMENT',
+      isOutageAlert: false,
+      isPublished: true,
+    },
+  });
+
+  await prisma.news.upsert({
+    where: { slug: 'khuyen-cao-su-dung-nuoc-tiet-kiem-mua-kho' },
+    update: {},
+    create: {
+      title: 'Khuyến cáo sử dụng nước tiết kiệm và an toàn trong mùa khô',
+      slug: 'khuyen-cao-su-dung-nuoc-tiet-kiem-mua-kho',
+      summary: 'Các biện pháp sử dụng nước sinh hoạt hiệu quả, phòng chống hạn hán và xâm nhập mặn.',
+      content: 'Nội dung tuyên truyền tiết kiệm nước...',
+      category: 'WATER_SAFETY',
+      isOutageAlert: false,
+      isPublished: true,
+    },
+  });
+  console.log('[CAWACO Seed] Da tao 3 thong bao tin tuc mau');
+
+  // 7. Tao Danh sach Dai ly Thu ho Tien nuoc tai Ca Mau
+  const agentsData = [
+    {
+      name: 'Bưu điện Trung tâm TP. Cà Mau - VNPost',
+      agentType: 'VNPOST',
+      district: 'TP_CA_MAU',
+      address: 'Số 02, đường Lưu Tấn Tài, Phường 5, TP. Cà Mau',
+      latitude: 9.1795,
+      longitude: 105.1524,
+      phone: '0290 3831 018',
+      openingHours: '07:00 - 18:00 (Thứ 2 - Thứ 7)',
+    },
+    {
+      name: 'Bưu cục Giao dịch Phường 7 - VNPost',
+      agentType: 'VNPOST',
+      district: 'TP_CA_MAU',
+      address: 'Số 148, đường Nguyễn Tất Thành, Phường 7, TP. Cà Mau',
+      latitude: 9.1672,
+      longitude: 105.1435,
+      phone: '0290 3824 555',
+      openingHours: '07:30 - 17:30',
+    },
+    {
+      name: 'Cửa hàng Viettel Post Trần Hưng Đạo',
+      agentType: 'VIETTEL_POST',
+      district: 'TP_CA_MAU',
+      address: 'Số 88, đường Trần Hưng Đạo, Phường 5, TP. Cà Mau',
+      latitude: 9.1812,
+      longitude: 105.1543,
+      phone: '1900 8095',
+      openingHours: '07:30 - 20:00 (Cả Chủ Nhật)',
+    },
+    {
+      name: 'Điểm thu hộ Payoo FPT Shop Quang Trung',
+      agentType: 'PAYOO',
+      district: 'TP_CA_MAU',
+      address: 'Số 122, đường Quang Trung, Phường Tân Thành, TP. Cà Mau',
+      latitude: 9.1751,
+      longitude: 105.1488,
+      phone: '1800 6601',
+      openingHours: '08:00 - 21:30',
+    },
+    {
+      name: 'Ngân hàng Agribank Chi nhánh Tỉnh Cà Mau',
+      agentType: 'BANK',
+      district: 'TP_CA_MAU',
+      address: 'Số 06, đường An Dương Vương, Phường 7, TP. Cà Mau',
+      latitude: 9.1715,
+      longitude: 105.1491,
+      phone: '0290 3838 522',
+      openingHours: '07:30 - 16:30 (Thứ 2 - Thứ 6)',
+    },
+    {
+      name: 'Bưu cục Huyện Thới Bình - VNPost',
+      agentType: 'VNPOST',
+      district: 'THOI_BINH',
+      address: 'Khóm 1, Thị trấn Thới Bình, Huyện Thới Bình, Tỉnh Cà Mau',
+      latitude: 9.3512,
+      longitude: 105.1321,
+      phone: '0290 3861 234',
+      openingHours: '07:30 - 17:00',
+    },
+    {
+      name: 'Bưu điện Huyện Cái Nước - VNPost',
+      agentType: 'VNPOST',
+      district: 'CAI_NUOC',
+      address: 'Khóm 2, Thị trấn Cái Nước, Huyện Cái Nước, Tỉnh Cà Mau',
+      latitude: 9.0145,
+      longitude: 105.0210,
+      phone: '0290 3883 111',
+      openingHours: '07:30 - 17:00',
+    },
+    {
+      name: 'Cửa hàng Viettel Post Trần Văn Thời',
+      agentType: 'VIETTEL_POST',
+      district: 'TRAN_VAN_THOI',
+      address: 'Khóm 7, Thị trấn Trần Văn Thời, Huyện Trần Văn Thời, Tỉnh Cà Mau',
+      latitude: 9.1120,
+      longitude: 104.9820,
+      phone: '1900 8095',
+      openingHours: '07:30 - 18:00',
+    }
+  ];
+
+  for (const ag of agentsData) {
+    const existing = await prisma.paymentAgent.findFirst({ where: { name: ag.name } });
+    if (!existing) {
+      await prisma.paymentAgent.create({ data: ag });
+    }
+  }
+  console.log(`[CAWACO Seed] Da tao ${agentsData.length} Dai ly thu ho tien nuoc tai Ca Mau`);
+
+  // 8. Tao Danh sach Ha tang Mang luoi Cap nuoc GIS
+  const networkNodesData = [
+    {
+      code: 'PLANT-CM-01',
+      name: 'Nhà máy Xử lý Nước ngầm Cà Mau 1',
+      nodeType: 'PLANT',
+      latitude: 9.1830,
+      longitude: 105.1460,
+      status: 'NORMAL',
+      capacityM3: 25000,
+      description: 'Nhà máy cấp nước trung tâm công suất 25.000 m³/ngày đêm, nguồn nước ngầm tầng sâu.',
+    },
+    {
+      code: 'PLANT-CM-02',
+      name: 'Nhà máy Xử lý Nước mặt Cà Mau 2 (Hồ Khánh An)',
+      nodeType: 'PLANT',
+      latitude: 9.2150,
+      longitude: 105.0920,
+      status: 'NORMAL',
+      capacityM3: 40000,
+      description: 'Nhà máy khai thác nguồn nước mặt thô Hồ Khánh An - sông Ông Đốc.',
+    },
+    {
+      code: 'BOOSTER-LVL',
+      name: 'Trạm Bơm Tăng Áp Lý Văn Lâm',
+      nodeType: 'BOOSTER',
+      latitude: 9.1550,
+      longitude: 105.1380,
+      status: 'NORMAL',
+      capacityM3: 15000,
+      description: 'Trạm điều áp và phân phối nước khu vực phía Nam thành phố và tuyến Quốc lộ 1A.',
+    },
+    {
+      code: 'BOOSTER-TACTHU',
+      name: 'Trạm Tăng Áp & Điều Tiết Tắc Thủ',
+      nodeType: 'BOOSTER',
+      latitude: 9.1720,
+      longitude: 105.0850,
+      status: 'NORMAL',
+      capacityM3: 12000,
+      description: 'Trạm tăng áp phục vụ tuyến đường hành lang ven biển và huyện U Minh.',
+    },
+    {
+      code: 'HYDRANT-QT-01',
+      name: 'Trụ Cứu Hỏa Giao lộ Quang Trung - Phan Ngọc Hiển',
+      nodeType: 'HYDRANT',
+      latitude: 9.1772,
+      longitude: 105.1510,
+      status: 'NORMAL',
+      description: 'Trụ cứu hỏa đô thị D100 chuẩn PCCC tỉnh Cà Mau.',
+    },
+    {
+      code: 'MAINT-D300-QT',
+      name: 'Điểm Thi Công Đấu Nối Ống D300 Quang Trung',
+      nodeType: 'MAINTENANCE',
+      latitude: 9.1765,
+      longitude: 105.1495,
+      status: 'MAINTENANCE',
+      description: 'Khu vực thi công cải tạo tuyến ống cấp nước chính phục vụ mở rộng đô thị.',
+    }
+  ];
+
+  for (const node of networkNodesData) {
+    await prisma.waterNetworkNode.upsert({
+      where: { code: node.code },
+      update: {},
+      create: node,
+    });
+  }
+  console.log(`[CAWACO Seed] Da tao ${networkNodesData.length} nut ha tang GIS mang luoi nuoc`);
+
+  // 9. Tao Ho so Dang ky lap moi mau
+  await prisma.waterRegistration.upsert({
+    where: { registrationCode: 'REG-2026-001' },
+    update: {},
+    create: {
+      registrationCode: 'REG-2026-001',
+      userId: user.id,
+      fullName: 'Nguyễn Văn An',
+      phone: '0918234567',
+      idCardNumber: '096088001234',
+      district: 'TP. Cà Mau',
+      ward: 'Phường Tân Thành',
+      streetAddress: 'Số 204, đường Quang Trung, Khóm 26',
+      purpose: 'DOMESTIC_TP',
+      attachedDocs: ['/uploads/cccd_front.jpg', '/uploads/giay_nha_dat.jpg'],
+      status: 'SURVEYING',
+      estimatedCost: 1850000,
+      adminNote: 'Đã phân công kỹ thuật viên khảo sát thực tế vị trí đồng hồ ngày 29/08/2026.',
+    },
+  });
+
+  // 10. Tao Khao sat y kien CSAT mau
+  await prisma.customerSurvey.create({
+    data: {
+      userId: user.id,
+      customerCode: 'CM102938',
+      waterQualityScore: 5,
+      serviceScore: 5,
+      supportScore: 4,
+      comment: 'Chất lượng nước sạch rất trong và áp lực nước sinh hoạt mạnh, nhân viên giao dịch tận tình.',
+    },
+  });
+
+  // 11. Tao Gop y mau
+  await prisma.customerFeedback.upsert({
+    where: { ticketCode: 'FB-2026-001' },
+    update: {},
+    create: {
+      ticketCode: 'FB-2026-001',
+      userId: user.id,
+      fullName: 'Nguyễn Văn An',
+      phone: '0918234567',
+      email: 'an.nguyen@gmail.com',
+      title: 'Đề xuất nâng cấp tiện ích thông báo cúp nước qua Zalo Mini App',
+      content: 'Rất hoan nghênh CAWACO đã triển khai ứng dụng Zalo Mini App, mong công ty gửi thông báo trước 24h khi có kế hoạch súc xả đường ống định kỳ.',
+      category: 'GOP_Y',
+      replyContent: 'CAWACO chân thành cảm ơn ý kiến đóng góp quý báu của Quý khách. Công ty đã cấu hình gửi tin nhắn Zalo ZNS tự động trước 24h.',
+      isResolved: true,
+      resolvedAt: new Date(),
+    },
+  });
 
   console.log('[CAWACO Seed] Hoan tat khoi tao du lieu seed thanh cong.');
 }

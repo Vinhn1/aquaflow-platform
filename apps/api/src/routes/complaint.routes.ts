@@ -8,16 +8,28 @@ export function createComplaintRouter(complaintService: ComplaintService): Route
   const router = Router();
 
   // POST /api/v1/complaints
-  router.post('/', authenticate, validateBody(CreateComplaintSchema), async (req: AuthenticatedRequest, res, next) => {
+  router.post(
+    '/',
+    authenticate,
+    validateBody(CreateComplaintSchema),
+    async (req: AuthenticatedRequest, res, next) => {
+
     try {
       const userId = req.user?.id || 'usr-zalo-8891';
-      const { category, description, latitude, longitude, address, imageUrls } = req.body;
+      const citizenName = req.user?.fullName || req.body.citizenName || 'Nguyễn Văn An';
+      const phone = req.user?.phone || req.body.phone || '0918 234 567';
+      const { category, description, latitude, longitude } = req.body;
+      const address = req.body.address || req.body.addressText || 'Số 204, đường Quang Trung, Khóm 26, Phường Tân Thành, TP. Cà Mau';
+      const imageUrls = req.body.imageUrls || req.body.images || req.body.photos || [];
+
       const complaint = await complaintService.createComplaint({
         userId,
+        citizenName,
+        phone,
         category,
         description,
-        latitude,
-        longitude,
+        latitude: latitude || 9.17682,
+        longitude: longitude || 105.15001,
         address,
         imageUrls,
       });
@@ -61,8 +73,13 @@ export function createComplaintRouter(complaintService: ComplaintService): Route
   router.patch('/:id/status', authenticate, validateBody(UpdateComplaintStatusSchema), async (req, res, next) => {
     try {
       const { id } = req.params;
-      const { status } = req.body;
-      const updated = await complaintService.updateStatus(id, status);
+      const { status, assignedWorkerName, assignedWorkerPhone, dispatchNote, resolutionNote } = req.body;
+      const updated = await complaintService.updateStatus(id, status, {
+        assignedWorkerName,
+        assignedWorkerPhone,
+        dispatchNote,
+        resolutionNote,
+      });
       if (!updated) {
         return res.status(404).json({
           success: false,

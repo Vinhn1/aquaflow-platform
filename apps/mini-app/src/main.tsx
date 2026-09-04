@@ -1,6 +1,8 @@
 import React from 'react';
 import { createRoot } from 'react-dom/client';
 import { App } from './App.js';
+import { ToastProvider } from './context/ToastContext.js';
+import SnackbarProvider from 'zmp-ui/snackbar-provider';
 import 'zmp-ui/zaui.css';
 import 'leaflet/dist/leaflet.css';
 import './style.css';
@@ -23,7 +25,11 @@ function bootstrap() {
   const root = createRoot(container);
   root.render(
     <React.StrictMode>
-      <App />
+      <SnackbarProvider>
+        <ToastProvider>
+          <App />
+        </ToastProvider>
+      </SnackbarProvider>
     </React.StrictMode>
   );
 }

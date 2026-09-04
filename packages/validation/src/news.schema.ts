@@ -6,6 +6,9 @@ export const NewsCategoryEnum = z.enum(
     'MAINTENANCE_OUTAGE',
     'WATER_SAFETY',
     'TARIFF_POLICY',
+    'OUTAGE_NOTICE',
+    'POLICY_UPDATE',
+    'COMMUNITY',
   ],
   {
     errorMap: () => ({ message: 'Danh mục tin tức không hợp lệ' }),
@@ -23,14 +26,17 @@ export const CreateNewsSchema = z.object({
   title: z.string().min(5, 'Tiêu đề tin tức phải có ít nhất 5 ký tự').max(255, 'Tiêu đề không được vượt quá 255 ký tự'),
   slug: z
     .string()
-    .min(3, 'Đường dẫn tĩnh (slug) phải có ít nhất 3 ký tự')
-    .max(255, 'Slug không được vượt quá 255 ký tự')
-    .regex(/^[a-z0-9-]+$/, 'Slug chỉ được chứa chữ cái thường, số và dấu gạch ngang'),
+    .min(3)
+    .max(255)
+    .regex(/^[a-z0-9-]+$/, 'Slug chỉ được chứa chữ cái thường, số và dấu gạch ngang')
+    .optional(),
   summary: z.string().min(10, 'Tóm tắt tin tức phải có ít nhất 10 ký tự').max(500, 'Tóm tắt không được vượt quá 500 ký tự'),
   content: z.string().min(20, 'Nội dung chi tiết phải có ít nhất 20 ký tự'),
   category: NewsCategoryEnum.default('ANNOUNCEMENT'),
   isOutageAlert: z.boolean().default(false),
-  affectedArea: z.string().max(255, 'Khu vực ảnh hưởng không được vượt quá 255 ký tự').optional(),
+  affectedArea: z.string().max(500).optional(),
+  affectedAreas: z.string().max(500).optional(),
+  thumbnailUrl: z.string().optional(),
   outageStartTime: z.string().datetime({ message: 'Thời gian bắt đầu cúp nước không hợp lệ' }).optional(),
   outageEndTime: z.string().datetime({ message: 'Thời gian dự kiến cấp nước lại không hợp lệ' }).optional(),
   isPublished: z.boolean().default(true),

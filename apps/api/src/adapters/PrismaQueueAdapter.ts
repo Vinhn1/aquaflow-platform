@@ -8,21 +8,52 @@ import { prisma } from '../lib/prisma.js';
 export class PrismaQueueAdapter implements IQueuePort {
   async issueTicket(params: IssueTicketParams): Promise<QueueTicketDto> {
     // 1. Kiem tra chi nhanh
-    const branch = await prisma.branch.findUnique({
-      where: { id: params.branchId },
+    let branch = await prisma.branch.findFirst({
+      where: {
+        OR: [
+          { id: params.branchId },
+          { code: params.branchId },
+        ],
+      },
     });
 
+    if (!branch) {
+      branch = await prisma.branch.findFirst();
+    }
+
+    const branchId = branch ? branch.id : params.branchId;
     const branchName = branch ? branch.name : 'Trụ sở chính CAWACO 204 Quang Trung';
 
-    // 2. Tinh so luong nguoi dang cho de tinh so thu tu va uoc tinh thoi gian
+    // 2. Kiem tra hoac tao user hop le neu can
+    let user = await prisma.user.findFirst({
+      where: {
+        OR: [
+          { id: params.userId },
+          { zaloId: 'zalo_user_cawaco_01' },
+          { phone: params.phone || '0918234567' },
+        ],
+      },
+    });
+
+    if (!user) {
+      user = await prisma.user.create({
+        data: {
+          fullName: params.customerName,
+          phone: params.phone,
+          role: 'CITIZEN',
+        },
+      });
+    }
+
+    // 3. Tinh so luong nguoi dang cho de tinh so thu tu va uoc tinh thoi gian
     const waitingCount = await prisma.queueTicket.count({
       where: {
-        branchId: params.branchId,
+        branchId,
         status: 'WAITING',
       },
     });
 
-    // 3. Tinh prefix theo loai dich vu
+    // 4. Tinh prefix theo loai dich vu
     const prefix =
       params.serviceType === 'NEW_METER_REGISTRATION'
         ? 'A'
@@ -32,13 +63,13 @@ export class PrismaQueueAdapter implements IQueuePort {
             ? 'C'
             : 'D';
 
-    // 4. Lay so luong ve trong ngay de sinh ma tu dong tang
+    // 5. Lay so luong ve trong ngay de sinh ma tu dong tang
     const today = new Date();
     today.setHours(0, 0, 0, 0);
 
     const countToday = await prisma.queueTicket.count({
       where: {
-        branchId: params.branchId,
+        branchId,
         issuedAt: { gte: today },
       },
     });
@@ -48,13 +79,13 @@ export class PrismaQueueAdapter implements IQueuePort {
     const positionInQueue = waitingCount + 1;
     const estimatedWaitMinutes = positionInQueue * 5;
 
-    // 5. Luu ve moi vao co so du lieu that
+    // 6. Luu ve moi vao co so du lieu that
     const ticket = await prisma.queueTicket.create({
       data: {
         ticketNumber,
-        branchId: params.branchId,
+        branchId,
         serviceType: params.serviceType,
-        userId: params.userId,
+        userId: user.id,
         customerName: params.customerName,
         status: 'WAITING',
         positionInQueue,

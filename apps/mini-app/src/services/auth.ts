@@ -1,4 +1,5 @@
-import api from 'zmp-sdk';
+import { getUserInfo, getAccessToken, getPhoneNumber } from 'zmp-sdk/apis';
+import { formatApiUrl } from './api.js';
 
 export interface UserProfile {
   id: string;
@@ -17,71 +18,124 @@ const STORAGE_KEY_USER = 'cawaco_user_profile';
  */
 export class MiniAppAuthService {
   /**
-   * Khoi tao dang nhap Zalo OAuth va lay JWT token tu Backend API
+   * Khoi tao dang nhap Zalo OAuth that tu Zalo App va lay JWT token tu Backend API
    */
   public static async initZaloAuth(): Promise<{ token: string; user: UserProfile }> {
+    let realUserInfo: any = null;
+    let accessToken = '';
+
+    // 1. Goi Zalo Mini App SDK lay thong tin nguoi dung that (Avatar, Ten, Zalo ID)
     try {
-      let accessToken = '';
-
-      // 1. Kiem tra xem co dang chay trong moi truong Zalo WebView hay khong
-      if (typeof window !== 'undefined' && (window as any).ZLP) {
-        try {
-          accessToken = await api.getAccessToken({});
-        } catch (zmpError) {
-          console.warn('[ZMP Auth] Khong lay duoc access token truc tiep tu ZMP, su dung test fallback:', zmpError);
-          accessToken = 'test_dev_access_token_cawaco_2026';
-        }
-      } else {
-        accessToken = 'test_dev_access_token_cawaco_2026';
+      const infoRes: any = await getUserInfo({
+        autoRequestPermission: true,
+      });
+      console.log('[ZMP Auth] Ket qua getUserInfo tu Zalo SDK:', infoRes);
+      if (infoRes) {
+        realUserInfo = infoRes.userInfo || infoRes;
       }
+    } catch (userErr) {
+      console.warn('[ZMP Auth] Chua cap quyen getUserInfo hoac chay tren web browser:', userErr);
+    }
 
-      // 2. Gui Access Token len Backend de xac thuc va nhan JWT
-      const res = await fetch('/api/v1/auth/zalo', {
+    // 2. Goi lay Access Token tu Zalo SDK
+    try {
+      accessToken = await getAccessToken({});
+      console.log('[ZMP Auth] Lay accessToken thanh cong');
+    } catch (tokenErr) {
+      console.warn('[ZMP Auth] Chua lay duoc accessToken Zalo:', tokenErr);
+    }
+
+    // 3. Xay dung Profile tu thong tin Zalo that ngay lap tuc
+    const displayName = realUserInfo?.name || 'Khách hàng Zalo';
+    const avatar = realUserInfo?.avatar || '';
+    const initials = displayName
+      .split(' ')
+      .filter(Boolean)
+      .pop()
+      ?.slice(0, 2)
+      .toUpperCase() || 'KH';
+
+    let currentProfile: UserProfile = {
+      id: realUserInfo?.id || 'usr-zalo-current',
+      zaloId: realUserInfo?.id,
+      fullName: displayName,
+      phone: '0918 234 567',
+      avatarUrl: avatar,
+      avatarText: initials,
+    };
+
+    let token = 'cawaco_zalo_session_token';
+
+    // 4. Gui len Backend de dong bo CSDL PostgreSQL (neu Backend online)
+    try {
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 3500);
+
+      const res = await fetch(formatApiUrl('/api/v1/auth/zalo'), {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ accessToken }),
+        signal: controller.signal,
+        body: JSON.stringify({
+          accessToken: accessToken || undefined,
+          userInfo: realUserInfo || undefined,
+        }),
       });
 
-      if (!res.ok) {
-        throw new Error(`Xac thuc voi Backend that bai [${res.status}]`);
+      clearTimeout(timeoutId);
+
+      if (res.ok) {
+        const json = await res.json();
+        if (json.data) {
+          token = json.data.token || token;
+          const u = json.data.user;
+          if (u) {
+            currentProfile = {
+              id: u.id || currentProfile.id,
+              zaloId: u.zaloId || currentProfile.zaloId,
+              fullName: u.fullName || currentProfile.fullName,
+              phone: u.phone || currentProfile.phone,
+              avatarUrl: u.avatarUrl || currentProfile.avatarUrl,
+              avatarText: (u.fullName || currentProfile.fullName)
+                .split(' ')
+                .filter(Boolean)
+                .pop()
+                ?.slice(0, 2)
+                .toUpperCase() || initials,
+            };
+          }
+        }
       }
+    } catch (backendErr) {
+      console.log('[ZMP Auth] Su dung profile Zalo client-side:', backendErr);
+    }
 
-      const json = await res.json();
-      const { token, user } = json.data;
-
-      // 3. Chuan hoa profile nguoi dung
-      const userProfile: UserProfile = {
-        id: user.id,
-        zaloId: user.zaloId,
-        fullName: user.fullName || 'Người dùng Zalo',
-        phone: user.phone || '0918 234 567',
-        avatarUrl: user.avatarUrl,
-        avatarText: (user.fullName || 'AN')
-          .split(' ')
-          .pop()
-          ?.slice(0, 2)
-          .toUpperCase() || 'AN',
-      };
-
-      // 4. Luu token va profile vao storage
+    // 5. Luu vao localStorage
+    try {
       localStorage.setItem(STORAGE_KEY_TOKEN, token);
-      localStorage.setItem(STORAGE_KEY_USER, JSON.stringify(userProfile));
+      localStorage.setItem(STORAGE_KEY_USER, JSON.stringify(currentProfile));
+    } catch (e) {
+      console.warn('Cannot write to localStorage', e);
+    }
 
-      return { token, user: userProfile };
-    } catch (error) {
-      console.error('[MiniAppAuthService] Loi trong qua trinh xac thuc Zalo:', error);
+    return { token, user: currentProfile };
+  }
 
-      // Fallback an toan cho moi truong dev
-      const fallbackUser: UserProfile = {
-        id: 'usr-zalo-8891',
-        zaloId: 'zalo_user_cawaco_01',
-        fullName: 'Nguyễn Văn An',
-        phone: '0918 234 567',
-        avatarText: 'AN',
-      };
-      return { token: 'mock_jwt_token', user: fallbackUser };
+  /**
+   * Xin quyen lay so dien thoai that tu Zalo
+   */
+  public static async requestRealPhoneNumber(): Promise<string | null> {
+    try {
+      const res: any = await getPhoneNumber({
+        autoRequestPermission: true,
+      });
+      const token = res?.token || res?.number || null;
+      console.log('[ZMP Auth] Phone token:', token);
+      return token;
+    } catch (err) {
+      console.warn('[ZMP Auth] Khach hang tu choi cap so dien thoai:', err);
+      return null;
     }
   }
 

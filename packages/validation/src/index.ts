@@ -5,3 +5,4 @@ export * from './payment.schema.js';
 export * from './queue.schema.js';
 export * from './complaint.schema.js';
 export * from './news.schema.js';
+export * from './registration.schema.js';

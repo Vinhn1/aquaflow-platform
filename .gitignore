@@ -11,10 +11,12 @@ pnpm-debug.log*
 .env.*
 .env.docker
 !.env.example
+!.env.production.example
 
 # Build artifacts
 dist/
 build/
+www/
 .next/
 out/
 .turbo/

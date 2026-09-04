@@ -73,6 +73,47 @@ const MARKER_COLORS: Record<CawacoLocation['type'], string> = {
   payment: '#0E8E89',     // Teal — điểm thu tiền
 };
 
+/** Thông tin Vùng cúp nước & Sự cố mạng lưới */
+export interface NetworkIncident {
+  id: string;
+  title: string;
+  type: 'SCHEDULED_OUTAGE' | 'INCIDENT_REPAIR';
+  area: string;
+  timeRange: string;
+  lat: number;
+  lng: number;
+  radiusMeters: number;
+  affectedHouseholds: number;
+  waterTruckAvailable: boolean;
+}
+
+export const NETWORK_INCIDENTS: NetworkIncident[] = [
+  {
+    id: 'inc-01',
+    title: 'Bảo trì thay thế van mạng truyền dẫn D300',
+    type: 'SCHEDULED_OUTAGE',
+    area: 'Tuyến đường Lý Thường Kiệt & Nguyễn Trãi (Khóm 1, 2, P. 1)',
+    timeRange: '22:00 ngày 05/09 đến 04:00 ngày 06/09/2026',
+    lat: 9.1795,
+    lng: 105.151,
+    radiusMeters: 380,
+    affectedHouseholds: 420,
+    waterTruckAvailable: true,
+  },
+  {
+    id: 'inc-02',
+    title: 'Khắc phục rò rỉ đường ống phân phối D100',
+    type: 'INCIDENT_REPAIR',
+    area: 'Đầu hẻm 45 đường Quang Trung, P. Tân Thành',
+    timeRange: 'Dự kiến hoàn thành trước 18:00 hôm nay',
+    lat: 9.1768,
+    lng: 105.1534,
+    radiusMeters: 220,
+    affectedHouseholds: 110,
+    waterTruckAvailable: false,
+  },
+];
+
 /** Tạo custom marker SVG cho Leaflet */
 function createCustomMarker(color: string): L.DivIcon {
   return L.divIcon({
@@ -101,10 +142,29 @@ function createCustomMarker(color: string): L.DivIcon {
   });
 }
 
+/** Tạo marker cảnh báo sự cố */
+function createIncidentMarker(): L.DivIcon {
+  return L.divIcon({
+    html: `
+      <div style="
+        width: 34px; height: 34px; border-radius: 50%;
+        background: #DC2626; border: 2px solid #FFFFFF;
+        box-shadow: 0 2px 8px rgba(220,38,38,0.5);
+        display: flex; align-items: center; justify-content: center;
+        color: #FFFFFF; font-weight: 800; font-size: 16px;
+      ">!</div>`,
+    className: '',
+    iconSize: [34, 34],
+    iconAnchor: [17, 17],
+  });
+}
+
 export const MapPage: React.FC = () => {
   const mapContainerRef = useRef<HTMLDivElement>(null);
   const mapInstanceRef = useRef<L.Map | null>(null);
   const [selectedLocation, setSelectedLocation] = useState<CawacoLocation | null>(null);
+  const [selectedIncident, setSelectedIncident] = useState<NetworkIncident | null>(null);
+  const [activeFilter, setActiveFilter] = useState<'ALL' | 'BRANCH' | 'INCIDENTS'>('ALL');
   const [userPosition, setUserPosition] = useState<{ lat: number; lng: number } | null>(null);
   const [gpsLoading, setGpsLoading] = useState(false);
   const [gpsError, setGpsError] = useState('');
@@ -114,12 +174,12 @@ export const MapPage: React.FC = () => {
   useEffect(() => {
     if (!mapContainerRef.current || mapInstanceRef.current) return;
 
-    // Tạo map với center tại Cà Mau
+    // Tạo map với center tại Cà Mau (tắt zoomControl mặc định để không cấn thanh tìm kiếm)
     const map = L.map(mapContainerRef.current, {
       center: [9.1768, 105.1524],
       zoom: 14,
-      zoomControl: true,
-      attributionControl: true,
+      zoomControl: false,
+      attributionControl: false,
     });
 
     // Sử dụng OpenStreetMap tiles — miễn phí, không cần API key
@@ -138,7 +198,31 @@ export const MapPage: React.FC = () => {
       // Click vào marker → hiện bottom sheet chi tiết
       marker.on('click', () => {
         setSelectedLocation(loc);
+        setSelectedIncident(null);
         map.panTo([loc.lat, loc.lng], { animate: true, duration: 0.4 });
+      });
+    });
+
+    // Thêm markers và vùng bán kính ảnh hưởng sự cố / cúp nước
+    NETWORK_INCIDENTS.forEach((inc) => {
+      L.circle([inc.lat, inc.lng], {
+        radius: inc.radiusMeters,
+        color: '#DC2626',
+        fillColor: '#EF4444',
+        fillOpacity: 0.22,
+        weight: 1.5,
+        dashArray: '5, 5',
+      }).addTo(map);
+
+      const incMarker = L.marker([inc.lat, inc.lng], {
+        icon: createIncidentMarker(),
+        title: inc.title,
+      }).addTo(map);
+
+      incMarker.on('click', () => {
+        setSelectedIncident(inc);
+        setSelectedLocation(null);
+        map.panTo([inc.lat, inc.lng], { animate: true, duration: 0.4 });
       });
     });
 
@@ -217,76 +301,172 @@ export const MapPage: React.FC = () => {
     return map[type];
   };
 
-  return (
-    <div style={{ height: '100%', display: 'flex', flexDirection: 'column', position: 'relative' }}>
+  const [searchQuery, setSearchQuery] = useState('');
+  const [showLocationList, setShowLocationList] = useState(false);
 
-      {/* Header trang */}
-      <div style={{
-        padding: '14px 16px 10px',
-        background: '#fff',
-        borderBottom: '1px solid var(--color-border-subtle)',
-        flexShrink: 0,
-      }}>
-        <div style={{ fontSize: '15px', fontWeight: '700', color: 'var(--cawaco-deep-navy)' }}>
-          Điểm giao dịch CAWACO
+  const filteredLocations = CAWACO_LOCATIONS.filter(
+    (loc) =>
+      loc.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      loc.address.toLowerCase().includes(searchQuery.toLowerCase())
+  );
+
+  const handleSelectLocation = (loc: CawacoLocation) => {
+    setSelectedLocation(loc);
+    setShowLocationList(false);
+    setSearchQuery('');
+    const map = mapInstanceRef.current;
+    if (map) {
+      map.flyTo([loc.lat, loc.lng], 16, { animate: true, duration: 0.8 });
+    }
+  };
+
+  const handleResetView = () => {
+    const map = mapInstanceRef.current;
+    if (map) {
+      map.flyTo([9.1768, 105.1524], 14, { animate: true, duration: 0.8 });
+    }
+  };
+
+  return (
+    <div style={{ height: '100%', width: '100%', position: 'relative', overflow: 'hidden' }}>
+
+      {/* Floating Search Bar (Giống thiết kế mẫu) */}
+      <div className="map-floating-search-wrap">
+        <div className="map-floating-search-bar">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#64748B" strokeWidth="2">
+            <circle cx="11" cy="11" r="8" />
+            <line x1="21" y1="21" x2="16.65" y2="16.65" />
+          </svg>
+          <input
+            type="text"
+            placeholder="Tìm kiếm địa điểm..."
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            className="map-floating-search-input"
+          />
+          {searchQuery && (
+            <button
+              onClick={() => setSearchQuery('')}
+              style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 0, color: '#94A3B8' }}
+            >
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <line x1="18" y1="6" x2="6" y2="18" />
+                <line x1="6" y1="6" x2="18" y2="18" />
+              </svg>
+            </button>
+          )}
         </div>
-        <div style={{ fontSize: '12px', color: 'var(--color-text-muted)', marginTop: '2px' }}>
-          {CAWACO_LOCATIONS.length} điểm tại TP. Cà Mau
-        </div>
+
+        {/* Kết quả tìm kiếm thả xuống */}
+        {searchQuery.trim() && (
+          <div className="map-floating-search-results">
+            {filteredLocations.length > 0 ? (
+              filteredLocations.map((loc) => (
+                <div
+                  key={loc.id}
+                  className="map-search-result-item"
+                  onClick={() => handleSelectLocation(loc)}
+                >
+                  <div style={{
+                    width: '8px', height: '8px', borderRadius: '50%',
+                    background: MARKER_COLORS[loc.type], flexShrink: 0,
+                  }} />
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    <div style={{ fontSize: '13px', fontWeight: 600, color: '#0F172A', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                      {loc.name}
+                    </div>
+                    <div style={{ fontSize: '11px', color: '#64748B', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                      {loc.address}
+                    </div>
+                  </div>
+                </div>
+              ))
+            ) : (
+              <div style={{ padding: '12px', textAlign: 'center', fontSize: '12px', color: '#94A3B8' }}>
+                Không tìm thấy địa điểm phù hợp
+              </div>
+            )}
+          </div>
+        )}
       </div>
 
-      {/* Controls trên bản đồ */}
+      {/* Filter Pill Bar */}
       <div style={{
         position: 'absolute',
-        top: '70px',
-        right: '12px',
-        zIndex: 1000,
+        top: '64px',
+        left: '16px',
+        right: '16px',
+        zIndex: 10,
         display: 'flex',
-        flexDirection: 'column',
-        gap: '8px',
+        gap: '6px',
+        overflowX: 'auto',
+        paddingBottom: '4px',
       }}>
-        {/* Nút GPS */}
         <button
-          onClick={handleGetUserLocation}
-          disabled={gpsLoading}
+          type="button"
+          onClick={() => {
+            setActiveFilter('ALL');
+            setSelectedIncident(null);
+            handleResetView();
+          }}
           style={{
-            width: '40px',
-            height: '40px',
-            borderRadius: '50%',
-            background: '#fff',
-            border: '1px solid var(--color-border-subtle)',
-            boxShadow: '0 2px 8px rgba(0,0,0,0.15)',
+            padding: '5px 12px',
+            borderRadius: '20px',
+            fontSize: '11.5px',
+            fontWeight: 700,
+            backgroundColor: activeFilter === 'ALL' ? '#003B6F' : '#FFFFFF',
+            color: activeFilter === 'ALL' ? '#FFFFFF' : '#475569',
+            border: '1px solid #CBD5E1',
+            boxShadow: '0 2px 6px rgba(0,0,0,0.08)',
+            cursor: 'pointer',
+            whiteSpace: 'nowrap',
+          }}
+        >
+          Tất cả điểm
+        </button>
+        <button
+          type="button"
+          onClick={() => {
+            setActiveFilter('INCIDENTS');
+            setSelectedLocation(null);
+            const map = mapInstanceRef.current;
+            if (map && NETWORK_INCIDENTS.length > 0) {
+              map.flyTo([NETWORK_INCIDENTS[0].lat, NETWORK_INCIDENTS[0].lng], 15, { animate: true, duration: 0.8 });
+              setSelectedIncident(NETWORK_INCIDENTS[0]);
+            }
+          }}
+          style={{
+            padding: '5px 12px',
+            borderRadius: '20px',
+            fontSize: '11.5px',
+            fontWeight: 700,
+            backgroundColor: activeFilter === 'INCIDENTS' ? '#DC2626' : '#FFFFFF',
+            color: activeFilter === 'INCIDENTS' ? '#FFFFFF' : '#DC2626',
+            border: '1px solid #FCA5A5',
+            boxShadow: '0 2px 6px rgba(0,0,0,0.08)',
+            cursor: 'pointer',
+            whiteSpace: 'nowrap',
             display: 'flex',
             alignItems: 'center',
-            justifyContent: 'center',
-            cursor: gpsLoading ? 'wait' : 'pointer',
-            color: userPosition ? 'var(--cawaco-primary)' : 'var(--color-text-muted)',
+            gap: '5px',
           }}
-          title="Vị trí của tôi"
         >
-          {gpsLoading ? (
-            /* Spinner khi đang tải GPS */
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"
-              style={{ animation: 'spin 1s linear infinite' }}>
-              <path d="M21 12a9 9 0 1 1-6.219-8.56" />
-            </svg>
-          ) : (
-            /* Icon GPS */
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-              <circle cx="12" cy="12" r="3" />
-              <path d="M12 1v4M12 19v4M4.22 4.22l2.83 2.83M16.95 16.95l2.83 2.83M1 12h4M19 12h4M4.22 19.78l2.83-2.83M16.95 7.05l2.83-2.83" />
-            </svg>
-          )}
+          <span style={{ width: '6px', height: '6px', borderRadius: '50%', backgroundColor: activeFilter === 'INCIDENTS' ? '#FFFFFF' : '#DC2626' }} />
+          Vùng cúp nước &amp; Sự cố ({NETWORK_INCIDENTS.length})
         </button>
       </div>
 
-      {/* Bản đồ Leaflet */}
+      {/* Bản đồ Leaflet tràn viền toàn bộ không gian */}
       <div
         ref={mapContainerRef}
         style={{
-          flex: 1,
           width: '100%',
-          minHeight: '320px',
+          height: '100%',
+          position: 'absolute',
+          top: 0,
+          left: 0,
+          right: 0,
+          bottom: 0,
           zIndex: 1,
         }}
       />
@@ -297,7 +477,7 @@ export const MapPage: React.FC = () => {
           position: 'absolute',
           top: '72px',
           left: '16px',
-          right: '60px',
+          right: '16px',
           background: 'var(--color-danger-subtle)',
           border: '1px solid var(--color-danger)',
           borderRadius: 'var(--radius-md)',
@@ -310,37 +490,115 @@ export const MapPage: React.FC = () => {
         </div>
       )}
 
-      {/* Legend loại điểm */}
-      <div style={{
-        padding: '10px 16px',
-        background: '#fff',
-        borderTop: '1px solid var(--color-border-subtle)',
-        display: 'flex',
-        gap: '14px',
-        flexShrink: 0,
-      }}>
-        {Object.entries(MARKER_COLORS).map(([type, color]) => {
-          const badge = getLocationTypeBadge(type as CawacoLocation['type']);
-          return (
-            <div key={type} style={{ display: 'flex', alignItems: 'center', gap: '5px' }}>
-              <div style={{
-                width: '10px', height: '10px', borderRadius: '50%',
-                background: color, flexShrink: 0,
-              }} />
-              <span style={{ fontSize: '11px', color: 'var(--color-text-muted)' }}>{badge.label}</span>
-            </div>
-          );
-        })}
-        {userPosition && (
-          <div style={{ display: 'flex', alignItems: 'center', gap: '5px' }}>
-            <div style={{
-              width: '10px', height: '10px', borderRadius: '50%',
-              background: '#EF4444', flexShrink: 0,
-            }} />
-            <span style={{ fontSize: '11px', color: 'var(--color-text-muted)' }}>Vị trí của bạn</span>
-          </div>
-        )}
+      {/* Nút Danh mục nổi góc dưới trái (giống ảnh mẫu) */}
+      <button
+        type="button"
+        className="map-floating-category-btn"
+        onClick={() => setShowLocationList(true)}
+      >
+        <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+          <path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z" />
+        </svg>
+        <span>Danh mục</span>
+      </button>
+
+      {/* Các nút công cụ nổi bên phải */}
+      <div className="map-floating-tools">
+        {/* Nút Vị trí của tôi (GPS) */}
+        <button
+          type="button"
+          className="map-tool-btn"
+          onClick={handleGetUserLocation}
+          disabled={gpsLoading}
+          title="Vị trí của tôi"
+        >
+          {gpsLoading ? (
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#0369A1" strokeWidth="2" style={{ animation: 'spin 1s linear infinite' }}>
+              <path d="M21 12a9 9 0 1 1-6.219-8.56" />
+            </svg>
+          ) : (
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke={userPosition ? '#0369A1' : '#475569'} strokeWidth="2">
+              <circle cx="12" cy="12" r="3" />
+              <path d="M12 1v4M12 19v4M4.22 4.22l2.83 2.83M16.95 16.95l2.83 2.83M1 12h4M19 12h4M4.22 19.78l2.83-2.83M16.95 7.05l2.83-2.83" />
+            </svg>
+          )}
+        </button>
+
+        {/* Nút Toàn cảnh CAWACO */}
+        <button
+          type="button"
+          className="map-tool-btn"
+          onClick={handleResetView}
+          title="Toàn cảnh TP. Cà Mau"
+        >
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#475569" strokeWidth="2">
+            <circle cx="12" cy="12" r="10" />
+            <circle cx="12" cy="12" r="6" />
+            <circle cx="12" cy="12" r="2" />
+          </svg>
+        </button>
       </div>
+
+      {/* Modal Bottom Sheet Danh mục các điểm giao dịch */}
+      {showLocationList && (
+        <div className="modal-overlay" onClick={() => setShowLocationList(false)}>
+          <div className="bottom-sheet" onClick={(e) => e.stopPropagation()} style={{ maxHeight: '70%', paddingBottom: '24px' }}>
+            <div className="sheet-handle" />
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '14px' }}>
+              <div style={{ fontSize: '16px', fontWeight: 800, color: '#0F172A' }}>
+                Danh mục điểm giao dịch CAWACO
+              </div>
+              <button
+                onClick={() => setShowLocationList(false)}
+                style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#64748B', padding: '4px' }}
+              >
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                  <line x1="18" y1="6" x2="6" y2="18" />
+                  <line x1="6" y1="6" x2="18" y2="18" />
+                </svg>
+              </button>
+            </div>
+
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+              {CAWACO_LOCATIONS.map((loc) => {
+                const badge = getLocationTypeBadge(loc.type);
+                return (
+                  <div
+                    key={loc.id}
+                    onClick={() => handleSelectLocation(loc)}
+                    style={{
+                      padding: '12px',
+                      borderRadius: '12px',
+                      border: '1px solid #E2E8F0',
+                      backgroundColor: '#F8FAFC',
+                      cursor: 'pointer',
+                      display: 'flex',
+                      flexDirection: 'column',
+                      gap: '4px',
+                    }}
+                  >
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                      <span style={{ fontSize: '14px', fontWeight: 700, color: '#0F172A' }}>{loc.name}</span>
+                      <span style={{
+                        fontSize: '10px', fontWeight: 700,
+                        padding: '2px 8px', borderRadius: '12px',
+                        background: `${MARKER_COLORS[loc.type]}15`,
+                        color: MARKER_COLORS[loc.type],
+                      }}>
+                        {badge.label}
+                      </span>
+                    </div>
+                    <div style={{ fontSize: '12px', color: '#64748B' }}>{loc.address}</div>
+                    <div style={{ fontSize: '11px', color: '#0369A1', fontWeight: 600, marginTop: '2px' }}>
+                      Giờ mở cửa: {loc.hours}
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Bottom Sheet chi tiết điểm giao dịch */}
       {selectedLocation && (
@@ -427,6 +685,66 @@ export const MapPage: React.FC = () => {
                 </svg>
                 Chỉ đường
               </a>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Modal Bottom Sheet Chi tiết Vùng cúp nước & Sự cố */}
+      {selectedIncident && (
+        <div className="modal-overlay" onClick={() => setSelectedIncident(null)}>
+          <div className="bottom-sheet" onClick={(e) => e.stopPropagation()} style={{ maxHeight: '70%', paddingBottom: '24px' }}>
+            <div className="sheet-handle" />
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '12px' }}>
+              <div>
+                <span style={{
+                  display: 'inline-block',
+                  fontSize: '10.5px', fontWeight: 800, padding: '2px 8px', borderRadius: '6px',
+                  backgroundColor: selectedIncident.type === 'SCHEDULED_OUTAGE' ? '#FEF3C7' : '#FEE2E2',
+                  color: selectedIncident.type === 'SCHEDULED_OUTAGE' ? '#B45309' : '#DC2626',
+                  marginBottom: '4px',
+                }}>
+                  {selectedIncident.type === 'SCHEDULED_OUTAGE' ? 'Bảo trì theo kế hoạch' : 'Sự cố mạng lưới'}
+                </span>
+                <div style={{ fontSize: '15px', fontWeight: 800, color: '#0F172A' }}>
+                  {selectedIncident.title}
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={() => setSelectedIncident(null)}
+                style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#64748B', padding: '4px' }}
+              >
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                  <line x1="18" y1="6" x2="6" y2="18" />
+                  <line x1="6" y1="6" x2="18" y2="18" />
+                </svg>
+              </button>
+            </div>
+
+            <div style={{ backgroundColor: '#F8FAFC', borderRadius: '10px', padding: '12px', border: '1px solid #E2E8F0', display: 'flex', flexDirection: 'column', gap: '8px', fontSize: '12px' }}>
+              <div>
+                <span style={{ color: '#64748B' }}>Khu vực ảnh hưởng:</span>
+                <div style={{ fontWeight: 700, color: '#0F172A', marginTop: '2px' }}>{selectedIncident.area}</div>
+              </div>
+              <div>
+                <span style={{ color: '#64748B' }}>Thời gian dự kiến:</span>
+                <div style={{ fontWeight: 700, color: '#DC2626', marginTop: '2px' }}>{selectedIncident.timeRange}</div>
+              </div>
+              <div style={{ display: 'flex', justifyContent: 'space-between', borderTop: '1px solid #E2E8F0', paddingTop: '6px' }}>
+                <span style={{ color: '#64748B' }}>Số hộ dân bị ảnh hưởng:</span>
+                <strong>~{selectedIncident.affectedHouseholds} hộ</strong>
+              </div>
+              <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                <span style={{ color: '#64748B' }}>Xe bồn cấp nước miễn phí:</span>
+                <strong style={{ color: selectedIncident.waterTruckAvailable ? '#15803D' : '#64748B' }}>
+                  {selectedIncident.waterTruckAvailable ? 'Có hỗ trợ cấp nước tại chỗ' : 'Không'}
+                </strong>
+              </div>
+            </div>
+
+            <div style={{ marginTop: '12px', fontSize: '11px', color: '#64748B', lineHeight: 1.45 }}>
+              Đội kỹ thuật CAWACO đang tích cực thi công để khôi phục áp lực nước sớm nhất. Quý khách cần hỗ trợ gấp vui lòng liên hệ Tổng đài <strong>0290 3836360</strong>.
             </div>
           </div>
         </div>

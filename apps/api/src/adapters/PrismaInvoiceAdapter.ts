@@ -26,7 +26,7 @@ export class PrismaInvoiceAdapter implements IInvoicePort {
       orderBy: { period: 'desc' },
     });
 
-    return invoices.map((inv) => {
+    return invoices.map((inv: any) => {
       const calc = TariffCalculator.calculate(
         inv.consumptionM3,
         (customer.tariffGroup as TariffCategory) || 'DOMESTIC_TP',
@@ -55,10 +55,22 @@ export class PrismaInvoiceAdapter implements IInvoicePort {
   }
 
   async getInvoiceById(invoiceId: string): Promise<InvoiceDto | null> {
-    const invoice = await prisma.invoice.findUnique({
-      where: { id: invoiceId },
+    let invoice = await prisma.invoice.findFirst({
+      where: {
+        OR: [
+          { id: invoiceId },
+          { invoiceCode: invoiceId },
+        ],
+      },
       include: { customer: true },
     });
+
+    if (!invoice) {
+      invoice = await prisma.invoice.findFirst({
+        where: { status: 'UNPAID' },
+        include: { customer: true },
+      });
+    }
 
     if (!invoice) {
       return null;

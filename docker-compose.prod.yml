@@ -1,0 +1,69 @@
+version: '3.8'
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: aquaflow-postgres
+    restart: always
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-aquaflow_cawaco}
+      POSTGRES_USER: ${POSTGRES_USER:-aquaflow_user}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+    volumes:
+      - postgres_prod_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER:-aquaflow_user} -d $${POSTGRES_DB:-aquaflow_cawaco}"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+    networks:
+      - aquaflow-net
+
+  api:
+    build:
+      context: .
+      dockerfile: Dockerfile.api
+    container_name: aquaflow-api
+    restart: always
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      NODE_ENV: production
+      PORT: 3000
+      DATABASE_URL: postgresql://${POSTGRES_USER:-aquaflow_user}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB:-aquaflow_cawaco}?schema=public
+      JWT_SECRET: ${JWT_SECRET}
+      JWT_EXPIRES_IN: ${JWT_EXPIRES_IN:-7d}
+      PAYMENT_WEBHOOK_SECRET: ${PAYMENT_WEBHOOK_SECRET}
+      MOCK_CAWACO_API: "false"
+      MOCK_PAYMENT_GATEWAY: "false"
+      MOCK_ZALO_AUTH: "false"
+      ZALO_APP_ID: ${ZALO_APP_ID:-3879828502555234376}
+      ZALO_APP_SECRET: ${ZALO_APP_SECRET:-e63PhT2GDL5N5v6L3OUw}
+      ZALO_MINI_APP_ID: ${ZALO_MINI_APP_ID:-2784671839475576206}
+      ZALO_OA_ID: ${ZALO_OA_ID:-2562028218754028209}
+      VIETQR_CLIENT_ID: ${VIETQR_CLIENT_ID}
+      VIETQR_API_KEY: ${VIETQR_API_KEY}
+    ports:
+      - "127.0.0.1:3005:3000"
+    networks:
+      - aquaflow-net
+
+  admin:
+    build:
+      context: .
+      dockerfile: Dockerfile.admin
+    container_name: aquaflow-admin
+    restart: always
+    ports:
+      - "127.0.0.1:8085:80"
+    networks:
+      - aquaflow-net
+
+volumes:
+  postgres_prod_data:
+    driver: local
+
+networks:
+  aquaflow-net:
+    driver: bridge

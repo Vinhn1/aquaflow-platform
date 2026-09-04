@@ -9,6 +9,20 @@ export interface ApiResponse<T = any> {
   };
 }
 
+const BASE_URL = (import.meta.env.VITE_API_BASE_URL || '').replace(/\/$/, '');
+
+export function getApiBaseUrl(): string {
+  return BASE_URL;
+}
+
+export function formatApiUrl(path: string): string {
+  if (path.startsWith('http://') || path.startsWith('https://')) {
+    return path;
+  }
+  const cleanPath = path.startsWith('/') ? path : `/${path}`;
+  return `${BASE_URL}${cleanPath}`;
+}
+
 /**
  * HTTP Client Wrapper cho Zalo Mini App
  * Tu dong dinh kem JWT Bearer Token va xu ly phien dang nhap
@@ -28,7 +42,8 @@ class ApiClient {
   }
 
   public async get<T>(url: string): Promise<T> {
-    const res = await fetch(url, {
+    const targetUrl = formatApiUrl(url);
+    const res = await fetch(targetUrl, {
       method: 'GET',
       headers: this.getHeaders(),
     });
@@ -36,7 +51,7 @@ class ApiClient {
     if (res.status === 401) {
       // Thu lam moi phien dang nhap neu token het han
       await MiniAppAuthService.initZaloAuth();
-      const retryRes = await fetch(url, {
+      const retryRes = await fetch(targetUrl, {
         method: 'GET',
         headers: this.getHeaders(),
       });
@@ -47,7 +62,8 @@ class ApiClient {
   }
 
   public async post<T>(url: string, body?: any): Promise<T> {
-    const res = await fetch(url, {
+    const targetUrl = formatApiUrl(url);
+    const res = await fetch(targetUrl, {
       method: 'POST',
       headers: this.getHeaders(),
       body: body ? JSON.stringify(body) : undefined,
@@ -55,7 +71,7 @@ class ApiClient {
 
     if (res.status === 401) {
       await MiniAppAuthService.initZaloAuth();
-      const retryRes = await fetch(url, {
+      const retryRes = await fetch(targetUrl, {
         method: 'POST',
         headers: this.getHeaders(),
         body: body ? JSON.stringify(body) : undefined,
@@ -67,7 +83,8 @@ class ApiClient {
   }
 
   public async delete<T>(url: string): Promise<T> {
-    const res = await fetch(url, {
+    const targetUrl = formatApiUrl(url);
+    const res = await fetch(targetUrl, {
       method: 'DELETE',
       headers: this.getHeaders(),
     });

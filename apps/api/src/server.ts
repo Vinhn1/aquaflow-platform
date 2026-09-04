@@ -1,9 +1,12 @@
+import http from 'http';
 import { createApp } from './app.js';
 
 const PORT = Number(process.env.PORT) || 3000;
 const app = createApp();
 
-const server = app.listen(PORT, () => {
+const server = http.createServer({ maxHeaderSize: 65536 }, app);
+
+server.listen(PORT, () => {
   console.log(`[AquaFlow CAWACO API] He thong Backend dang chay tai cong ${PORT}`);
   console.log(`[AquaFlow CAWACO API] Health check endpoint: http://localhost:${PORT}/health`);
 });
