@@ -400,10 +400,6 @@ export const ZaloMessaging: React.FC = () => {
                   <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
                   Zalo OA Đang Hoạt Động
                 </span>
-                <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-medium bg-slate-100 text-slate-700 border border-slate-200">
-                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
-                  Tự động đồng bộ
-                </span>
                 <button
                   onClick={handleSyncZalo}
                   disabled={isSyncing}
@@ -570,12 +566,16 @@ export const ZaloMessaging: React.FC = () => {
                           </span>
                         </div>
 
-                        <div className="flex items-center gap-1.5 mb-1">
-                          <span className="text-[10px] font-mono px-1.5 py-0.2 bg-blue-100 text-blue-700 rounded font-semibold">
-                            {conv.customerCode}
-                          </span>
-                          <span className="text-[10px] text-slate-400">{conv.phone}</span>
-                        </div>
+                        {(conv.customerCode || conv.phone) && (
+                          <div className="flex items-center gap-1.5 mb-1">
+                            {conv.customerCode && (
+                              <span className="text-[10px] font-mono px-1.5 py-0.2 bg-blue-100 text-blue-700 rounded font-semibold">
+                                {conv.customerCode}
+                              </span>
+                            )}
+                            {conv.phone && <span className="text-[10px] text-slate-400">{conv.phone}</span>}
+                          </div>
+                        )}
 
                         <p className="text-xs text-slate-500 truncate">{conv.lastMessage}</p>
                       </div>
@@ -603,12 +603,14 @@ export const ZaloMessaging: React.FC = () => {
                   <div>
                     <div className="flex items-center gap-2">
                       <span className="font-bold text-sm text-slate-800">{selectedConversation.customerName}</span>
-                      <span className="text-xs font-mono font-bold text-blue-700 bg-blue-50 px-2 py-0.5 rounded border border-blue-200">
-                        {selectedConversation.customerCode}
-                      </span>
+                      {selectedConversation.customerCode && (
+                        <span className="text-xs font-mono font-bold text-blue-700 bg-blue-50 px-2 py-0.5 rounded border border-blue-200">
+                          {selectedConversation.customerCode}
+                        </span>
+                      )}
                     </div>
                     <div className="text-xs text-slate-500">
-                      {selectedConversation.phone} • {selectedConversation.address || 'TP. Cà Mau'}
+                      {[selectedConversation.phone, selectedConversation.address || 'TP. Cà Mau'].filter(Boolean).join(' • ')}
                     </div>
                   </div>
                 </div>
