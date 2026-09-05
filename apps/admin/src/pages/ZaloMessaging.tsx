@@ -97,12 +97,10 @@ export const ZaloMessaging: React.FC = () => {
   // Stats state
   const [stats, setStats] = useState<any>(null);
 
-  // Load conversations
   const fetchConversations = async () => {
     try {
       setLoadingConv(true);
       const queryParams = new URLSearchParams();
-      if (filterStatus !== 'ALL') queryParams.append('status', filterStatus);
       if (searchQuery) queryParams.append('search', searchQuery);
 
       const res = await fetch(`/api/v1/zalo/conversations?${queryParams.toString()}`);
@@ -190,16 +188,16 @@ export const ZaloMessaging: React.FC = () => {
   };
 
   useEffect(() => {
-    // Tự động sync 1 lần khi mở trang
+    // Tự động đồng bộ một lần khi mở trang
     fetch('/api/v1/zalo/sync', { method: 'POST' })
       .then(() => fetchConversations())
       .catch(() => fetchConversations());
 
     fetchBroadcasts();
     fetchStats();
-  }, [filterStatus]);
+  }, []);
 
-  // Polling tự động mỗi 6 giây để cập nhật tin nhắn realtime
+  // Tự động cập nhật mỗi 6 giây
   useEffect(() => {
     const timer = setInterval(() => {
       fetchConversations();
@@ -231,7 +229,7 @@ export const ZaloMessaging: React.FC = () => {
         body: JSON.stringify({
           conversationId: selectedConvId,
           content: text,
-          staffName: user?.fullName ? `CSKH ${user.fullName}` : 'CSKH CAWACO Cà Mau',
+          staffName: user?.fullName ? `CSKH ${user.fullName}` : 'CSKH Cấp Nước Cà Mau',
           staffAvatar: user?.avatarUrl || '/brand/logo.jpg',
           type: 'TEXT',
         }),
@@ -252,27 +250,7 @@ export const ZaloMessaging: React.FC = () => {
     }
   };
 
-  // Cập nhật trạng thái hội thoại
-  const handleUpdateStatus = async (status: 'OPEN' | 'RESOLVED' | 'PENDING') => {
-    if (!selectedConvId) return;
-    try {
-      const res = await fetch(`/api/v1/zalo/conversations/${selectedConvId}/status`, {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ status }),
-      });
-      if (res.ok) {
-        toast.success(`Đã cập nhật trạng thái: ${status === 'RESOLVED' ? 'Đã xử lý xong' : status}`);
-        setConversations((prev) =>
-          prev.map((c) => (c.id === selectedConvId ? { ...c, status } : c))
-        );
-      }
-    } catch {
-      toast.error('Lỗi khi cập nhật trạng thái');
-    }
-  };
-
-  // Phát lệnh gửi Broadcast
+  // Phát lệnh gửi thông báo
   const handleSendBroadcast = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!bcTitle.trim() || !bcContent.trim()) {
@@ -297,7 +275,7 @@ export const ZaloMessaging: React.FC = () => {
       const json = await res.json().catch(() => ({}));
 
       if (res.ok && json.success) {
-        toast.success(`Đã phát lệnh phát sóng Zalo ZNS thành công tới ${json.data?.recipientCount || 0} khách hàng!`);
+        toast.success(`Đã phát lệnh gửi thông báo Zalo thành công tới ${json.data?.recipientCount || 0} khách hàng!`);
         setBcTitle('');
         setBcContent('');
         await fetchBroadcasts();
@@ -322,7 +300,7 @@ export const ZaloMessaging: React.FC = () => {
       <div className="bg-white border-b border-slate-200 px-6 py-4 flex items-center justify-between flex-shrink-0">
         <div>
           <div className="flex items-center gap-3">
-            <h1 className="text-xl font-bold text-slate-800">Quản Trị Tin Nhắn Zalo &amp; CSKH</h1>
+            <h1 className="text-xl font-bold text-slate-800">Quản Trị Tin Nhắn Zalo</h1>
             {stats?.zaloOAStatus?.hasAccessToken ? (
               <div className="flex items-center gap-2">
                 <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-bold bg-emerald-100 text-emerald-800 border border-emerald-300">
@@ -353,19 +331,19 @@ export const ZaloMessaging: React.FC = () => {
                       window.open(json.data.authUrl, '_blank');
                     }
                   } catch {
-                    toast.error('Không thể lấy URL cấp quyền Zalo OA');
+                    toast.error('Không thể lấy liên kết cấp quyền Zalo OA');
                   }
                 }}
                 className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-bold bg-blue-50 hover:bg-blue-100 text-blue-700 border border-blue-200 cursor-pointer transition"
-                title="Nhấn để mở trang xác thực cấp quyền Zalo Official Account"
+                title="Nhấn để mở trang xác thực cấp quyền Zalo"
               >
                 <span className="w-2 h-2 rounded-full bg-blue-500"></span>
-                Zalo OA · Nhấn Cấp Quyền OAuth
+                Zalo OA · Nhấn Cấp Quyền
               </a>
             )}
           </div>
           <p className="text-xs text-slate-500 mt-1">
-            Trung tâm tiếp nhận hội thoại 2 chiều, phản hồi trực tiếp và gửi thông báo ZNS tự động qua CSDL PostgreSQL &amp; Zalo OA API
+            Trung tâm tiếp nhận hội thoại hai chiều, phản hồi trực tiếp và gửi thông báo tự động
           </p>
         </div>
 
@@ -379,7 +357,7 @@ export const ZaloMessaging: React.FC = () => {
                 : 'text-slate-600 hover:text-slate-900'
             }`}
           >
-            Hộp Thư Live Chat
+            Hộp Thư Trực Tuyến
           </button>
           <button
             onClick={() => setActiveTab('BROADCAST')}
@@ -389,7 +367,7 @@ export const ZaloMessaging: React.FC = () => {
                 : 'text-slate-600 hover:text-slate-900'
             }`}
           >
-            Gửi Thông Báo (Broadcast)
+            Gửi Thông Báo
           </button>
           <button
             onClick={() => setActiveTab('STATS')}
@@ -404,24 +382,24 @@ export const ZaloMessaging: React.FC = () => {
         </div>
       </div>
 
-      {/* TAB 1: LIVE CHAT 2 CHIỀU */}
+      {/* TAB 1: LIVE CHAT */}
       {activeTab === 'CHAT' && (
         <div className="flex-1 flex overflow-hidden">
           {/* Cột trái: Danh sách hội thoại */}
           <div className="w-80 bg-white border-r border-slate-200 flex flex-col flex-shrink-0">
-            {/* Search & Filter */}
-            <div className="p-3 border-b border-slate-100 space-y-2">
+            {/* Search */}
+            <div className="p-3 border-b border-slate-100">
               <div className="relative">
                 <input
                   type="text"
-                  placeholder="Tìm khách hàng, SĐT, danh bạ..."
+                  placeholder="Tìm khách hàng, số điện thoại..."
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
                   onKeyDown={(e) => e.key === 'Enter' && fetchConversations()}
-                  className="w-full pl-8 pr-3 py-1.5 text-xs bg-slate-100 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="w-full pl-8 pr-3 py-2 text-xs bg-slate-100 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500"
                 />
                 <svg
-                  className="w-4 h-4 text-slate-400 absolute left-2.5 top-2"
+                  className="w-4 h-4 text-slate-400 absolute left-2.5 top-2.5"
                   fill="none"
                   viewBox="0 0 24 24"
                   stroke="currentColor"
@@ -429,22 +407,6 @@ export const ZaloMessaging: React.FC = () => {
                   <circle cx="11" cy="11" r="8" strokeWidth="2" />
                   <line x1="21" y1="21" x2="16.65" y2="16.65" strokeWidth="2" />
                 </svg>
-              </div>
-
-              <div className="flex gap-1 text-[11px]">
-                {['ALL', 'OPEN', 'RESOLVED'].map((st) => (
-                  <button
-                    key={st}
-                    onClick={() => setFilterStatus(st)}
-                    className={`flex-1 py-1 rounded-md font-semibold ${
-                      filterStatus === st
-                        ? 'bg-blue-600 text-white'
-                        : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
-                    }`}
-                  >
-                    {st === 'ALL' ? 'Tất cả' : st === 'OPEN' ? 'Đang mở' : 'Đã xong'}
-                  </button>
-                ))}
               </div>
             </div>
 
@@ -535,26 +497,9 @@ export const ZaloMessaging: React.FC = () => {
                   </div>
                 </div>
 
-                <div className="flex items-center gap-2">
-                  <select
-                    value={selectedConversation.status}
-                    onChange={(e) => handleUpdateStatus(e.target.value as any)}
-                    className="text-xs font-semibold border border-slate-300 rounded-lg px-2.5 py-1.5 bg-white text-slate-700 focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  >
-                    <option value="OPEN">Đang Xử Lý (Open)</option>
-                    <option value="PENDING">Chờ Khách Phản Hồi</option>
-                    <option value="RESOLVED">Đã Hoàn Tất (Resolved)</option>
-                  </select>
-
-                  <button
-                    onClick={() => handleUpdateStatus('RESOLVED')}
-                    className="px-3 py-1.5 rounded-lg text-xs font-bold bg-emerald-600 hover:bg-emerald-700 text-white shadow-sm flex items-center gap-1.5"
-                  >
-                    <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2.5">
-                      <polyline points="20 6 9 17 4 12" />
-                    </svg>
-                    Xong
-                  </button>
+                <div className="flex items-center gap-2 text-xs font-medium text-emerald-700 bg-emerald-50 px-3 py-1.5 rounded-xl border border-emerald-200">
+                  <span className="w-2 h-2 rounded-full bg-emerald-500"></span>
+                  <span>Trực tuyến</span>
                 </div>
               </div>
 
@@ -648,14 +593,14 @@ export const ZaloMessaging: React.FC = () => {
         </div>
       )}
 
-      {/* TAB 2: GỬI THÔNG BÁO HÀNG LOẠT (BROADCAST & ZNS) */}
+      {/* TAB 2: GỬI THÔNG BÁO HÀNG LOẠT */}
       {activeTab === 'BROADCAST' && (
         <div className="flex-1 overflow-y-auto p-6">
           <div className="max-w-4xl mx-auto grid grid-cols-1 md:grid-cols-5 gap-6">
             {/* Form Soạn Tin */}
             <div className="md:col-span-3 bg-white p-6 rounded-2xl border border-slate-200 shadow-sm space-y-4">
               <div className="border-b border-slate-100 pb-3">
-                <h2 className="text-base font-bold text-slate-800">Soạn Thông Báo Zalo ZNS Hàng Loạt</h2>
+                <h2 className="text-base font-bold text-slate-800">Soạn Thông Báo Zalo Hàng Loạt</h2>
                 <p className="text-xs text-slate-500 mt-0.5">
                   Phát thông báo cúp nước khẩn cấp, bảo trì hoặc nhắc hạn thanh toán theo địa bàn
                 </p>
@@ -689,7 +634,7 @@ export const ZaloMessaging: React.FC = () => {
                     onClick={() => {
                       setBcType('BILLING_REMINDER');
                       setBcTitle('Thông báo nhắc hạn thanh toán hóa đơn tiền nước');
-                      setBcContent('Hóa đơn tiền nước kỳ này của Quý khách đã được phát hành. Kính mời Quý khách mở Mini App Cấp Nước Cà Mau để tra cứu chỉ số và thanh toán trực tuyến qua VietQR.');
+                      setBcContent('Hóa đơn tiền nước kỳ này của Quý khách đã được phát hành. Kính mời Quý khách mở Mini App Cấp Nước Cà Mau để tra cứu chỉ số và thanh toán trực tuyến qua mã QR.');
                     }}
                     className="px-2.5 py-1 text-[11px] font-medium bg-blue-50 hover:bg-blue-100 text-blue-700 rounded-lg border border-blue-200 transition"
                   >
@@ -770,7 +715,7 @@ export const ZaloMessaging: React.FC = () => {
                     <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9" />
                     <path d="M13.73 21a2 2 0 0 1-3.46 0" />
                   </svg>
-                  <span>{isBroadcasting ? 'Đang gửi thông báo...' : 'Phát Lệnh Gửi Tin Zalo ZNS'}</span>
+                  <span>{isBroadcasting ? 'Đang gửi thông báo...' : 'Phát Lệnh Gửi Thông Báo'}</span>
                 </button>
               </form>
             </div>
@@ -782,14 +727,14 @@ export const ZaloMessaging: React.FC = () => {
                 <div className="bg-slate-100 rounded-2xl overflow-hidden p-3 min-h-[380px] flex flex-col justify-between">
                   <div className="space-y-2">
                     <div className="flex items-center gap-2 pb-2 border-b border-slate-200">
-                      <img src="/brand/logo.jpg" alt="OA" className="w-6 h-6 rounded-full" />
+                      <img src="/brand/logo.jpg" alt="Logo" className="w-6 h-6 rounded-full" />
                       <div className="text-[11px] font-bold text-slate-800">Cấp Nước Cà Mau</div>
-                      <span className="text-[9px] bg-amber-500 text-white px-1 rounded font-bold ml-auto">OA</span>
+                      <span className="text-[9px] bg-blue-600 text-white px-1.5 py-0.5 rounded font-bold ml-auto">Chính Thức</span>
                     </div>
 
                     <div className="bg-white rounded-xl p-3 shadow-sm border border-slate-200 space-y-1.5">
                       <div className="text-[10px] font-bold text-red-600 uppercase">
-                        {bcType === 'OUTAGE_ALERT' ? 'Cảnh Báo Cúp Nước' : 'Thông Báo CAWACO'}
+                        {bcType === 'OUTAGE_ALERT' ? 'Cảnh Báo Cúp Nước' : 'Thông Báo Cấp Nước Cà Mau'}
                       </div>
                       <div className="text-xs font-bold text-slate-800">{bcTitle || 'Tiêu đề thông báo mẫu'}</div>
                       <div className="text-[11px] text-slate-600 leading-relaxed">
@@ -801,7 +746,7 @@ export const ZaloMessaging: React.FC = () => {
                     </div>
                   </div>
 
-                  <div className="text-center text-[10px] text-slate-400">Tin nhắn Zalo Notification Service</div>
+                  <div className="text-center text-[10px] text-slate-400">Tin nhắn Cấp Nước Cà Mau</div>
                 </div>
               </div>
             </div>
@@ -815,13 +760,13 @@ export const ZaloMessaging: React.FC = () => {
           {/* KPI Cards */}
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
             <div className="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm">
-              <div className="text-xs font-bold text-slate-400 uppercase tracking-wide">Tổng Hội Thoại CSKH</div>
+              <div className="text-xs font-bold text-slate-400 uppercase tracking-wide">Tổng Số Hội Thoại</div>
               <div className="text-2xl font-extrabold text-slate-800 mt-1">{stats?.totalConversations ?? 0}</div>
-              <div className="text-xs text-emerald-600 font-semibold mt-1">Đang mở: {stats?.openConversations ?? 0} cuộc</div>
+              <div className="text-xs text-slate-500 mt-1">{stats?.totalConversations ?? 0} cuộc trao đổi</div>
             </div>
 
             <div className="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm">
-              <div className="text-xs font-bold text-slate-400 uppercase tracking-wide">Thuê Bao Nhận Broadcast</div>
+              <div className="text-xs font-bold text-slate-400 uppercase tracking-wide">Thuê Bao Nhận Thông Báo</div>
               <div className="text-2xl font-extrabold text-blue-600 mt-1">
                 {(stats?.totalBroadcastRecipients ?? 0).toLocaleString('vi-VN')}
               </div>
@@ -829,22 +774,22 @@ export const ZaloMessaging: React.FC = () => {
             </div>
 
             <div className="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm">
-              <div className="text-xs font-bold text-slate-400 uppercase tracking-wide">Tỷ Lệ Gửi ZNS Thành Công</div>
+              <div className="text-xs font-bold text-slate-400 uppercase tracking-wide">Tỷ Lệ Gửi Tin Thành Công</div>
               <div className="text-2xl font-extrabold text-emerald-600 mt-1">{stats?.successRate || 99.2}%</div>
-              <div className="text-xs text-slate-500 mt-1">Chuẩn bảo mật Zalo Official</div>
+              <div className="text-xs text-slate-500 mt-1">Bảo mật hệ thống Zalo</div>
             </div>
 
             <div className="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm">
-              <div className="text-xs font-bold text-slate-400 uppercase tracking-wide">Thời Gian Phản Hồi TB</div>
+              <div className="text-xs font-bold text-slate-400 uppercase tracking-wide">Thời Gian Phản Hồi Trung Bình</div>
               <div className="text-2xl font-extrabold text-amber-600 mt-1">{stats?.avgResponseTime || '1.8 phút'}</div>
-              <div className="text-xs text-emerald-600 font-semibold mt-1">CSAT: {stats?.satisfactionScore || 4.85} / 5.0</div>
+              <div className="text-xs text-emerald-600 font-semibold mt-1">Mức độ hài lòng: {stats?.satisfactionScore || 4.85} trên 5.0</div>
             </div>
           </div>
 
-          {/* Lịch Sử Broadcast */}
+          {/* Lịch Sử Phát Sóng */}
           <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
             <div className="px-6 py-4 border-b border-slate-200 font-bold text-sm text-slate-800">
-              Lịch Sử Phát Sóng Tin Nhắn Zalo Hàng Loạt (ZNS)
+              Lịch Sử Phát Sóng Tin Nhắn Zalo Hàng Loạt
             </div>
 
             <div className="overflow-x-auto">
@@ -874,8 +819,7 @@ export const ZaloMessaging: React.FC = () => {
                       </td>
                       <td className="px-6 py-3.5 font-mono font-bold text-blue-700">{bc.recipientCount}</td>
                       <td className="px-6 py-3.5 font-mono text-emerald-600 font-bold">
-                        {bc.successCount} (
-                        {Math.round((bc.successCount / bc.recipientCount) * 1000) / 10}%)
+                        {bc.successCount} - đạt {Math.round((bc.successCount / bc.recipientCount) * 1000) / 10}%
                       </td>
                       <td className="px-6 py-3.5 text-slate-600">{bc.sentBy}</td>
                       <td className="px-6 py-3.5">
