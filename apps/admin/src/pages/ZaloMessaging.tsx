@@ -322,7 +322,7 @@ export const ZaloMessaging: React.FC = () => {
               <div className="flex items-center gap-2">
                 <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-bold bg-emerald-100 text-emerald-800 border border-emerald-300">
                   <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
-                  Zalo OA Đang Hoạt Động (OA ID: {stats.zaloOAStatus.oaId})
+                  Zalo OA Đang Hoạt Động
                 </span>
                 <button
                   onClick={handleSyncZalo}

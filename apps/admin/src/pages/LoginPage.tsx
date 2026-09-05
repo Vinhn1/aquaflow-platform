@@ -62,7 +62,7 @@ export const LoginPage: React.FC = () => {
         <div className="bg-slate-800/80 backdrop-blur-xl border border-slate-700/80 rounded-2xl p-6 sm:p-8 shadow-2xl shadow-black/40 text-slate-100">
           <h2 className="text-lg font-bold text-white mb-1">Đăng Nhập Cán Bộ Nhân Viên</h2>
           <p className="text-xs text-slate-400 mb-6">
-            Sử dụng Mã nhân viên (e.g. <span className="text-blue-400 font-mono">CW-889</span>) hoặc Email nội bộ do phòng CNTT cấp.
+            Sử dụng Mã nhân viên (e.g. <span className="text-blue-400 font-mono">CW-ADMIN</span>) hoặc Email nội bộ do phòng CNTT cấp.
           </p>
 
           {error && (
@@ -85,7 +85,7 @@ export const LoginPage: React.FC = () => {
                 type="text"
                 value={identifier}
                 onChange={(e) => setIdentifier(e.target.value)}
-                placeholder="VD: CW-889 hoặc admin@cawaco.com.vn"
+                placeholder="VD: CW-ADMIN hoặc admin@cawaco.com.vn"
                 className="w-full text-sm px-3.5 py-2.5 rounded-xl bg-slate-900/80 border border-slate-700 text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition font-mono"
                 required
               />
@@ -141,35 +141,19 @@ export const LoginPage: React.FC = () => {
               Đăng Nhập Nhanh (Mật khẩu mặc định: 123456)
             </div>
 
-            <div className="grid grid-cols-2 gap-3 text-xs">
-              <button
-                type="button"
-                onClick={() => handleQuick('ADMIN')}
-                disabled={loading}
-                className="p-3 rounded-xl bg-slate-900/80 hover:bg-blue-600/20 border border-slate-700 hover:border-blue-500 text-left transition space-y-1"
-              >
-                <div className="font-bold text-white flex items-center gap-1.5">
-                  <span className="w-2 h-2 rounded-full bg-purple-400" />
-                  <span>CW-ADMIN</span>
-                </div>
-                <div className="text-[11px] text-blue-300 font-medium">Quản Trị Viên Hệ Thống</div>
-                <div className="text-[10px] text-slate-400">Toàn quyền hệ thống & Cấp tài khoản</div>
-              </button>
-
-              <button
-                type="button"
-                onClick={() => handleQuick('STAFF')}
-                disabled={loading}
-                className="p-3 rounded-xl bg-slate-900/80 hover:bg-blue-600/20 border border-slate-700 hover:border-blue-500 text-left transition space-y-1"
-              >
-                <div className="font-bold text-white flex items-center gap-1.5">
-                  <span className="w-2 h-2 rounded-full bg-blue-400" />
-                  <span>Trần Văn B (CW-889)</span>
-                </div>
-                <div className="text-[11px] text-blue-300 font-medium">Cán Bộ Quản Lý & Điều Hành</div>
-                <div className="text-[10px] text-slate-400">Sử dụng toàn bộ các chức năng</div>
-              </button>
-            </div>
+            <button
+              type="button"
+              onClick={() => handleQuick('ADMIN')}
+              disabled={loading}
+              className="w-full p-3 rounded-xl bg-slate-900/80 hover:bg-blue-600/20 border border-slate-700 hover:border-blue-500 text-left transition space-y-1"
+            >
+              <div className="font-bold text-white flex items-center gap-1.5">
+                <span className="w-2 h-2 rounded-full bg-purple-400" />
+                <span>CW-ADMIN</span>
+              </div>
+              <div className="text-[11px] text-blue-300 font-medium">Quản Trị Viên Hệ Thống</div>
+              <div className="text-[10px] text-slate-400">Toàn quyền hệ thống &amp; Cấp tài khoản cán bộ</div>
+            </button>
           </div>
         </div>
 

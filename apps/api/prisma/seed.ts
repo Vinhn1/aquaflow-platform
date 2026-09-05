@@ -80,69 +80,7 @@ async function main() {
       isActive: true,
     },
   });
-
-  await prisma.user.upsert({
-    where: { employeeCode: 'CW-889' },
-    update: {},
-    create: {
-      employeeCode: 'CW-889',
-      email: 'tranvanb@cawaco.com.vn',
-      phone: '0918889889',
-      fullName: 'Trần Văn B',
-      passwordHash: defaultPasswordHash,
-      role: 'COUNTER_STAFF',
-      branchId: branch.id,
-      counterNumber: 1,
-      isActive: true,
-    },
-  });
-
-  await prisma.user.upsert({
-    where: { employeeCode: 'CW-890' },
-    update: {},
-    create: {
-      employeeCode: 'CW-890',
-      email: 'lethic@cawaco.com.vn',
-      phone: '0919998890',
-      fullName: 'Lê Thị C',
-      passwordHash: defaultPasswordHash,
-      role: 'COUNTER_STAFF',
-      branchId: branch.id,
-      counterNumber: 2,
-      isActive: true,
-    },
-  });
-
-  await prisma.user.upsert({
-    where: { employeeCode: 'CW-MGR01' },
-    update: {},
-    create: {
-      employeeCode: 'CW-MGR01',
-      email: 'truongphong@cawaco.com.vn',
-      phone: '0917778899',
-      fullName: 'Phạm Văn Trưởng Phòng',
-      passwordHash: defaultPasswordHash,
-      role: 'BRANCH_MANAGER',
-      branchId: branch.id,
-      isActive: true,
-    },
-  });
-
-  await prisma.user.upsert({
-    where: { employeeCode: 'CW-TECH01' },
-    update: {},
-    create: {
-      employeeCode: 'CW-TECH01',
-      email: 'kythuat@cawaco.com.vn',
-      phone: '0916665544',
-      fullName: 'Hoàng Văn Kỹ Thuật',
-      passwordHash: defaultPasswordHash,
-      role: 'FIELD_WORKER',
-      branchId: branch.id,
-      isActive: true,
-    },
-  });
-  console.log(`[CAWACO Seed] Da khoi tao 5 tai khoan can bo nhan vien CAWACO`);
+  console.log(`[CAWACO Seed] Da khoi tao tai khoan quan tri chinh CW-ADMIN`);
 
   // 3. Tao Khach hang (Ma danh bo CM102938)
   const customer1 = await prisma.customer.upsert({

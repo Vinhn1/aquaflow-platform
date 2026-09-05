@@ -89,17 +89,8 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     }
   };
 
-  const quickLogin = async (accountType: 'ADMIN' | 'STAFF' | string) => {
-    let identifier = 'CW-ADMIN';
-    if (accountType === 'STAFF' || accountType === 'STAFF_Q1' || accountType === 'MANAGER') {
-      identifier = 'CW-889';
-    } else if (accountType === 'STAFF_Q2') {
-      identifier = 'CW-890';
-    } else if (accountType === 'TECH') {
-      identifier = 'CW-TECH01';
-    }
-
-    await login(identifier, '123456');
+  const quickLogin = async (_accountType: 'ADMIN' | 'STAFF' | string = 'ADMIN') => {
+    await login('CW-ADMIN', '123456');
   };
 
   const logout = () => {
