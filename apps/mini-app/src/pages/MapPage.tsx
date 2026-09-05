@@ -9,8 +9,23 @@
  */
 
 import React, { useEffect, useRef, useState } from 'react';
-import { openPhone, openOutApp } from 'zmp-sdk/apis';
+import { openPhone, openWebview, openOutApp } from 'zmp-sdk/apis';
 import L from 'leaflet';
+
+/** Tinh khoang cach giua 2 toa do theo cong thuc Haversine (km) */
+function calculateDistanceKm(lat1: number, lon1: number, lat2: number, lon2: number): number {
+  const R = 6371;
+  const dLat = ((lat2 - lat1) * Math.PI) / 180;
+  const dLon = ((lon2 - lon1) * Math.PI) / 180;
+  const a =
+    Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+    Math.cos((lat1 * Math.PI) / 180) *
+      Math.cos((lat2 * Math.PI) / 180) *
+      Math.sin(dLon / 2) *
+      Math.sin(dLon / 2);
+  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+  return R * c;
+}
 
 // Sửa lỗi icon Leaflet bị mất khi dùng Vite bundler
 import iconUrl from 'leaflet/dist/images/marker-icon.png';
@@ -170,6 +185,15 @@ export const MapPage: React.FC = () => {
   const [gpsLoading, setGpsLoading] = useState(false);
   const [gpsError, setGpsError] = useState('');
   const userMarkerRef = useRef<L.Marker | null>(null);
+  const [routeInfo, setRouteInfo] = useState<{
+    distance: string;
+    duration: string;
+    destinationName: string;
+    destLat: number;
+    destLng: number;
+  } | null>(null);
+  const [routeLoading, setRouteLoading] = useState(false);
+  const routePolylineRef = useRef<L.Polyline | null>(null);
 
   // Khởi tạo bản đồ Leaflet một lần sau khi component mount
   useEffect(() => {
@@ -250,18 +274,165 @@ export const MapPage: React.FC = () => {
     window.location.href = `tel:${cleanPhone}`;
   };
 
-  /** Xu ly mo ban do chi duong qua Zalo Mini App SDK */
-  const handleDirections = async (lat: number, lng: number) => {
+  /** Ve tuyen duong truc tiep tren ban do Leaflet */
+  const drawRouteOnMap = async (destLat: number, destLng: number, destName: string) => {
+    const map = mapInstanceRef.current;
+    if (!map) return;
+
+    // Dong popup chi tiet diem giao dich de nguoi dung thay ban do ro rang
+    setSelectedLocation(null);
+    setRouteLoading(true);
+
+    let startLat = userPosition?.lat;
+    let startLng = userPosition?.lng;
+
+    // Neu chua co toa do nguoi dung, thu lay toa do qua Geolocation
+    if (!startLat || !startLng) {
+      if (navigator.geolocation) {
+        try {
+          const pos = await new Promise<GeolocationPosition>((resolve, reject) => {
+            navigator.geolocation.getCurrentPosition(resolve, reject, {
+              enableHighAccuracy: true,
+              timeout: 4000,
+            });
+          });
+          startLat = pos.coords.latitude;
+          startLng = pos.coords.longitude;
+          setUserPosition({ lat: startLat, lng: startLng });
+
+          if (userMarkerRef.current) userMarkerRef.current.remove();
+          const userIcon = L.divIcon({
+            html: `<div style="
+              width: 18px; height: 18px;
+              background: #EF4444; border-radius: 50%;
+              border: 3px solid white;
+              box-shadow: 0 0 0 3px rgba(239,68,68,0.3), 0 2px 8px rgba(0,0,0,0.3);
+            "></div>`,
+            className: '',
+            iconSize: [18, 18],
+            iconAnchor: [9, 9],
+          });
+          userMarkerRef.current = L.marker([startLat, startLng], { icon: userIcon })
+            .addTo(map)
+            .bindPopup('Vị trí của bạn', { closeButton: false });
+        } catch {
+          // Mac dinh trung tam Ca Mau neu khong co quyen GPS
+          startLat = 9.1768;
+          startLng = 105.1524;
+        }
+      } else {
+        startLat = 9.1768;
+        startLng = 105.1524;
+      }
+    }
+
+    // Xoa route polyline cu neu co
+    if (routePolylineRef.current) {
+      routePolylineRef.current.remove();
+      routePolylineRef.current = null;
+    }
+
+    let routeCoords: [number, number][] = [
+      [startLat, startLng],
+      [destLat, destLng],
+    ];
+    let distanceKmStr = '';
+    let durationMinStr = '';
+
+    try {
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 3000);
+      const res = await fetch(
+        `https://router.project-osrm.org/route/v1/driving/${startLng},${startLat};${destLng},${destLat}?overview=full&geometries=geojson`,
+        { signal: controller.signal }
+      );
+      clearTimeout(timeoutId);
+      if (res.ok) {
+        const data = await res.json();
+        if (data.routes && data.routes.length > 0) {
+          const r = data.routes[0];
+          routeCoords = r.geometry.coordinates.map(([lon, la]: [number, number]) => [la, lon]);
+          distanceKmStr = `${(r.distance / 1000).toFixed(1)} km`;
+          durationMinStr = `${Math.max(1, Math.round(r.duration / 60))} phút`;
+        }
+      }
+    } catch {
+      // Fallback dung Haversine
+      const d = calculateDistanceKm(startLat, startLng, destLat, destLng);
+      distanceKmStr = `${d.toFixed(1)} km`;
+      durationMinStr = `${Math.max(1, Math.round((d / 25) * 60))} phút`;
+    }
+
+    if (!distanceKmStr) {
+      const d = calculateDistanceKm(startLat, startLng, destLat, destLng);
+      distanceKmStr = `${d.toFixed(1)} km`;
+      durationMinStr = `${Math.max(1, Math.round((d / 25) * 60))} phút`;
+    }
+
+    // Ve polyline tuyen duong
+    const polyline = L.polyline(routeCoords, {
+      color: '#0284C7',
+      weight: 6,
+      opacity: 0.9,
+      lineCap: 'round',
+      lineJoin: 'round',
+    }).addTo(map);
+
+    routePolylineRef.current = polyline;
+    map.fitBounds(polyline.getBounds(), { padding: [60, 60], maxZoom: 16 });
+
+    setRouteInfo({
+      distance: distanceKmStr,
+      duration: durationMinStr,
+      destinationName: destName,
+      destLat,
+      destLng,
+    });
+    setRouteLoading(false);
+  };
+
+  /** Xoa duong chi duong dang hien thi tren ban do */
+  const clearRoute = () => {
+    if (routePolylineRef.current) {
+      routePolylineRef.current.remove();
+      routePolylineRef.current = null;
+    }
+    setRouteInfo(null);
+  };
+
+  /** Xu ly mo ban do chi duong */
+  const handleDirections = async (lat: number, lng: number, name?: string) => {
+    const targetName = name || selectedLocation?.name || 'Điểm giao dịch CAWACO';
     const mapUrl = `https://www.google.com/maps/dir/?api=1&destination=${lat},${lng}`;
+
+    // 1. Luon ve tuyen duong truc tiep ngay tren ban do Leaflet cua ung dung
+    await drawRouteOnMap(lat, lng, targetName);
+
+    // 2. Thu mo qua openWebview cua Zalo Mini App
+    try {
+      if (typeof openWebview === 'function') {
+        await openWebview({
+          url: mapUrl,
+          config: {
+            style: 'normal',
+            leftButton: 'back',
+          },
+        });
+        return;
+      }
+    } catch (err) {
+      console.warn('[MapPage] openWebview error:', err);
+    }
+
+    // 3. Thu mo qua openOutApp
     try {
       if (typeof openOutApp === 'function') {
         await openOutApp({ url: mapUrl });
         return;
       }
     } catch (err) {
-      console.warn('[MapPage] openOutApp error, fallback to browser open:', err);
+      console.warn('[MapPage] openOutApp error:', err);
     }
-    window.open(mapUrl, '_blank') || (window.location.href = mapUrl);
   };
 
   /** Lấy vị trí GPS của người dùng */
@@ -568,6 +739,131 @@ export const MapPage: React.FC = () => {
         </button>
       </div>
 
+      {/* Thong tin chi duong truc tiep tren ban do */}
+      {routeInfo && (
+        <div
+          style={{
+            position: 'absolute',
+            bottom: '24px',
+            left: '16px',
+            right: '16px',
+            zIndex: 1000,
+            backgroundColor: '#FFFFFF',
+            borderRadius: '16px',
+            padding: '16px',
+            boxShadow: '0 10px 25px -5px rgba(0, 0, 0, 0.2), 0 8px 10px -6px rgba(0, 0, 0, 0.1)',
+            border: '1px solid #E2E8F0',
+          }}
+        >
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '8px' }}>
+            <div>
+              <div style={{ fontSize: '11px', color: '#64748B', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.5px' }}>
+                Đang chỉ đường đến
+              </div>
+              <div style={{ fontSize: '15px', fontWeight: 700, color: '#0F172A', marginTop: '2px' }}>
+                {routeInfo.destinationName}
+              </div>
+            </div>
+            <button
+              type="button"
+              onClick={clearRoute}
+              style={{
+                background: '#F1F5F9',
+                border: 'none',
+                borderRadius: '50%',
+                width: '28px',
+                height: '28px',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                cursor: 'pointer',
+                color: '#64748B',
+              }}
+            >
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <line x1="18" y1="6" x2="6" y2="18" />
+                <line x1="6" y1="6" x2="18" y2="18" />
+              </svg>
+            </button>
+          </div>
+
+          <div style={{ display: 'flex', gap: '16px', backgroundColor: '#F0FDF4', padding: '10px 14px', borderRadius: '10px', border: '1px solid #BBF7D0', marginBottom: '12px' }}>
+            <div>
+              <div style={{ fontSize: '11px', color: '#166534' }}>Khoảng cách</div>
+              <div style={{ fontSize: '16px', fontWeight: 800, color: '#15803D' }}>{routeInfo.distance}</div>
+            </div>
+            <div style={{ borderLeft: '1px solid #BBF7D0', paddingLeft: '16px' }}>
+              <div style={{ fontSize: '11px', color: '#166534' }}>Thời gian ước tính</div>
+              <div style={{ fontSize: '16px', fontWeight: 800, color: '#15803D' }}>~{routeInfo.duration}</div>
+            </div>
+          </div>
+
+          <div style={{ display: 'flex', gap: '8px' }}>
+            <button
+              type="button"
+              onClick={async () => {
+                const mapUrl = `https://www.google.com/maps/dir/?api=1&destination=${routeInfo.destLat},${routeInfo.destLng}`;
+                try {
+                  if (typeof openWebview === 'function') {
+                    await openWebview({
+                      url: mapUrl,
+                      config: {
+                        style: 'normal',
+                        leftButton: 'back',
+                      },
+                    });
+                    return;
+                  }
+                } catch (e) {
+                  console.warn(e);
+                }
+                try {
+                  if (typeof openOutApp === 'function') {
+                    await openOutApp({ url: mapUrl });
+                    return;
+                  }
+                } catch (e) {
+                  console.warn(e);
+                }
+                window.open(mapUrl, '_blank') || (window.location.href = mapUrl);
+              }}
+              className="btn btn-primary"
+              style={{
+                flex: 1,
+                fontSize: '12px',
+                padding: '9px 12px',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                gap: '6px',
+                border: 'none',
+                cursor: 'pointer',
+                borderRadius: '8px',
+              }}
+            >
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <polygon points="3 11 22 2 13 21 11 13 3 11" />
+              </svg>
+              Mở trong Google Maps
+            </button>
+            <button
+              type="button"
+              onClick={clearRoute}
+              className="btn btn-secondary"
+              style={{
+                fontSize: '12px',
+                padding: '9px 14px',
+                border: 'none',
+                cursor: 'pointer',
+                borderRadius: '8px',
+              }}
+            >
+              Đóng
+            </button>
+          </div>
+        </div>
+      )}
+
       {/* Modal Bottom Sheet Danh mục các điểm giao dịch */}
       {showLocationList && (
         <div className="modal-overlay" onClick={() => setShowLocationList(false)}>
@@ -729,7 +1025,8 @@ export const MapPage: React.FC = () => {
               </button>
               <button
                 type="button"
-                onClick={() => handleDirections(selectedLocation.lat, selectedLocation.lng)}
+                onClick={() => handleDirections(selectedLocation.lat, selectedLocation.lng, selectedLocation.name)}
+                disabled={routeLoading}
                 className="btn btn-secondary"
                 style={{
                   fontSize: '13px',
@@ -743,10 +1040,16 @@ export const MapPage: React.FC = () => {
                   padding: '10px 12px',
                 }}
               >
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                  <polygon points="3 11 22 2 13 21 11 13 3 11" />
-                </svg>
-                Chỉ đường
+                {routeLoading ? (
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" style={{ animation: 'spin 1s linear infinite' }}>
+                    <path d="M21 12a9 9 0 1 1-6.219-8.56" />
+                  </svg>
+                ) : (
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                    <polygon points="3 11 22 2 13 21 11 13 3 11" />
+                  </svg>
+                )}
+                {routeLoading ? 'Đang vẽ đường...' : 'Chỉ đường'}
               </button>
             </div>
           </div>
