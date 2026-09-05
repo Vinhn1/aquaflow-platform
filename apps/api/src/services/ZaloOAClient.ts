@@ -155,6 +155,20 @@ export class ZaloOAClient {
   }
 
   /**
+   * Cập nhật Token thủ công từ trang quản trị hoặc cấu hình
+   */
+  public updateTokens(accessToken: string, refreshToken?: string, expiresIn = 90000): void {
+    this.accessToken = accessToken.trim();
+    if (refreshToken) {
+      this.refreshToken = refreshToken.trim();
+    }
+    this.tokenExpiresAt = Math.floor(Date.now() / 1000) + (Number(expiresIn) || 90000);
+    this.tokenExpiredOrInvalid = false;
+    this.persistTokens();
+    console.log('[ZaloOAClient] Đã cập nhật token thủ công từ trang quản trị');
+  }
+
+  /**
    * Tự động làm mới Access Token bằng Refresh Token khi sắp hết hạn
    */
   public async refreshAccessToken(): Promise<string | null> {

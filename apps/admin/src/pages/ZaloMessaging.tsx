@@ -97,6 +97,13 @@ export const ZaloMessaging: React.FC = () => {
   // Stats state
   const [stats, setStats] = useState<any>(null);
 
+  // Manual token modal state
+  const [showTokenModal, setShowTokenModal] = useState(false);
+  const [manualAccessToken, setManualAccessToken] = useState('');
+  const [manualRefreshToken, setManualRefreshToken] = useState('');
+  const [serverRedirectUri, setServerRedirectUri] = useState('');
+  const [savingToken, setSavingToken] = useState(false);
+
   const messagesEndRef = useRef<HTMLDivElement | null>(null);
 
   const fetchConversations = async (silent = false) => {
@@ -213,6 +220,53 @@ export const ZaloMessaging: React.FC = () => {
       toast.error('Lỗi kết nối máy chủ khi đồng bộ Zalo');
     } finally {
       setIsSyncing(false);
+    }
+  };
+
+  const handleOpenTokenModal = async () => {
+    setShowTokenModal(true);
+    try {
+      const res = await fetch('/api/v1/zalo/auth/url');
+      const json = await res.json();
+      if (json.data?.redirectUri) {
+        setServerRedirectUri(json.data.redirectUri);
+      }
+    } catch {
+      // ignore
+    }
+  };
+
+  const handleSaveTokens = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!manualAccessToken.trim()) {
+      toast.error('Vui lòng dán mã Access Token');
+      return;
+    }
+    setSavingToken(true);
+    try {
+      const res = await fetch('/api/v1/zalo/tokens', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          accessToken: manualAccessToken.trim(),
+          refreshToken: manualRefreshToken.trim() || undefined,
+        }),
+      });
+      const json = await res.json();
+      if (res.ok && json.success) {
+        toast.success('Đã lưu và kích hoạt kết nối Zalo OA thành công');
+        setShowTokenModal(false);
+        setManualAccessToken('');
+        setManualRefreshToken('');
+        await fetchStats();
+        await handleSyncZalo();
+      } else {
+        toast.error(json.message || 'Lưu token thất bại');
+      }
+    } catch {
+      toast.error('Không thể kết nối máy chủ');
+    } finally {
+      setSavingToken(false);
     }
   };
 
@@ -361,6 +415,16 @@ export const ZaloMessaging: React.FC = () => {
                   </svg>
                   {isSyncing ? 'Đang đồng bộ...' : 'Đồng bộ tin Zalo'}
                 </button>
+                <button
+                  onClick={handleOpenTokenModal}
+                  className="text-xs text-slate-500 hover:text-blue-600 underline ml-1 cursor-pointer font-medium"
+                  title="Cập nhật cấu hình hoặc kiểm tra Callback URL Zalo OA"
+                >
+                  Cấu hình Token
+                </button>
+              </div>
+            ) : (
+              <div className="flex items-center gap-2">
                 <a
                   href="/api/v1/zalo/auth/url"
                   onClick={async (e) => {
@@ -368,6 +432,9 @@ export const ZaloMessaging: React.FC = () => {
                     try {
                       const res = await fetch('/api/v1/zalo/auth/url');
                       const json = await res.json();
+                      if (json.data?.redirectUri) {
+                        setServerRedirectUri(json.data.redirectUri);
+                      }
                       if (json.data?.authUrl) {
                         window.open(json.data.authUrl, '_blank');
                       }
@@ -375,33 +442,20 @@ export const ZaloMessaging: React.FC = () => {
                       toast.error('Không thể lấy liên kết cấp quyền Zalo OA');
                     }
                   }}
-                  className="text-xs text-slate-400 hover:text-blue-600 underline ml-1 cursor-pointer"
-                  title="Cấp lại quyền kết nối nếu Access Token Zalo OA bị lỗi hoặc hết hạn"
+                  className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-amber-100 hover:bg-amber-200 text-amber-900 border border-amber-300 cursor-pointer transition"
+                  title="Nhấn để mở trang xác thực cấp quyền Zalo"
                 >
-                  Cấp lại quyền OA
+                  <span className="w-2 h-2 rounded-full bg-amber-500 animate-ping"></span>
+                  Zalo OA Cần Cấp Quyền Lại · Nhấn Cấp Quyền
                 </a>
+                <button
+                  onClick={handleOpenTokenModal}
+                  className="inline-flex items-center gap-1 px-3 py-1 rounded-full text-xs font-bold bg-blue-50 hover:bg-blue-100 text-blue-700 border border-blue-200 cursor-pointer transition"
+                  title="Nhập Access Token thủ công nếu liên kết OAuth gặp lỗi redirect_uri"
+                >
+                  Nhập Token Thủ Công
+                </button>
               </div>
-            ) : (
-              <a
-                href="/api/v1/zalo/auth/url"
-                onClick={async (e) => {
-                  e.preventDefault();
-                  try {
-                    const res = await fetch('/api/v1/zalo/auth/url');
-                    const json = await res.json();
-                    if (json.data?.authUrl) {
-                      window.open(json.data.authUrl, '_blank');
-                    }
-                  } catch {
-                    toast.error('Không thể lấy liên kết cấp quyền Zalo OA');
-                  }
-                }}
-                className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-amber-100 hover:bg-amber-200 text-amber-900 border border-amber-300 cursor-pointer transition"
-                title="Nhấn để mở trang xác thực cấp quyền Zalo"
-              >
-                <span className="w-2 h-2 rounded-full bg-amber-500 animate-ping"></span>
-                Zalo OA Cần Cấp Quyền Lại · Nhấn Cấp Quyền
-              </a>
             )}
           </div>
           <p className="text-xs text-slate-500 mt-1">
@@ -895,6 +949,100 @@ export const ZaloMessaging: React.FC = () => {
                 </tbody>
               </table>
             </div>
+          </div>
+        </div>
+      )}
+      {/* Modal Cấu hình / Nhập Token Zalo OA */}
+      {showTokenModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/50 backdrop-blur-sm p-4">
+          <div className="bg-white rounded-2xl shadow-2xl max-w-xl w-full p-6 border border-slate-200">
+            <div className="flex items-center justify-between pb-4 border-b border-slate-100">
+              <div>
+                <h2 className="text-base font-bold text-slate-800">Cấu Hình Kết Nối Zalo Official Account</h2>
+                <p className="text-xs text-slate-500 mt-0.5">Quản lý mã truy cập và xử lý cấu hình redirect_uri</p>
+              </div>
+              <button
+                onClick={() => setShowTokenModal(false)}
+                className="w-8 h-8 rounded-lg flex items-center justify-center text-slate-400 hover:text-slate-600 hover:bg-slate-100 transition"
+              >
+                <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+            </div>
+
+            {/* Hướng dẫn sửa lỗi -14003 */}
+            <div className="mt-4 p-3.5 bg-amber-50 border border-amber-200 rounded-xl text-xs text-amber-900 leading-relaxed">
+              <div className="font-bold flex items-center gap-1.5 text-amber-800 mb-1">
+                <span>Cách khắc phục lỗi -14003 (Invalid redirect uri):</span>
+              </div>
+              <p>Zalo yêu cầu URL Callback phải được khai báo trong ứng dụng. Hãy sao chép URL sau và dán vào mục <strong>Zalo for Developers &gt; Ứng dụng &gt; Official Account &gt; Callback URL</strong>:</p>
+              <div className="mt-2 flex items-center gap-2">
+                <input
+                  type="text"
+                  readOnly
+                  value={serverRedirectUri || 'https://api.websiteproject.id.vn/api/v1/zalo/auth/callback'}
+                  className="flex-1 bg-white border border-amber-300 px-2.5 py-1.5 rounded text-[11px] font-mono select-all text-slate-700"
+                />
+                <button
+                  type="button"
+                  onClick={() => {
+                    navigator.clipboard.writeText(serverRedirectUri || 'https://api.websiteproject.id.vn/api/v1/zalo/auth/callback');
+                    toast.success('Đã sao chép Callback URL');
+                  }}
+                  className="px-2.5 py-1.5 bg-amber-600 hover:bg-amber-700 text-white rounded text-xs font-semibold cursor-pointer transition"
+                >
+                  Sao chép
+                </button>
+              </div>
+            </div>
+
+            {/* Form nhập Access Token thủ công */}
+            <form onSubmit={handleSaveTokens} className="mt-4 space-y-3.5">
+              <div>
+                <label className="block text-xs font-bold text-slate-700 mb-1">
+                  Access Token Mới (Bắt buộc)
+                </label>
+                <textarea
+                  rows={3}
+                  value={manualAccessToken}
+                  onChange={(e) => setManualAccessToken(e.target.value)}
+                  placeholder="Dán Access Token được cấp từ công cụ Zalo Developer hoặc Postman vào đây..."
+                  className="w-full text-xs font-mono p-2.5 bg-slate-50 border border-slate-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:bg-white resize-none"
+                  required
+                />
+              </div>
+
+              <div>
+                <label className="block text-xs font-bold text-slate-700 mb-1">
+                  Refresh Token (Tùy chọn - để máy chủ tự động làm mới hàng ngày)
+                </label>
+                <input
+                  type="text"
+                  value={manualRefreshToken}
+                  onChange={(e) => setManualRefreshToken(e.target.value)}
+                  placeholder="Dán Refresh Token (nếu có)..."
+                  className="w-full text-xs font-mono p-2.5 bg-slate-50 border border-slate-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:bg-white"
+                />
+              </div>
+
+              <div className="flex items-center justify-end gap-2 pt-3 border-t border-slate-100">
+                <button
+                  type="button"
+                  onClick={() => setShowTokenModal(false)}
+                  className="px-4 py-2 text-xs font-semibold text-slate-600 hover:bg-slate-100 rounded-xl transition cursor-pointer"
+                >
+                  Hủy
+                </button>
+                <button
+                  type="submit"
+                  disabled={savingToken}
+                  className="px-4 py-2 text-xs font-bold text-white bg-blue-600 hover:bg-blue-700 rounded-xl shadow-sm transition disabled:opacity-50 cursor-pointer"
+                >
+                  {savingToken ? 'Đang lưu...' : 'Lưu và Kích Hoạt Token'}
+                </button>
+              </div>
+            </form>
           </div>
         </div>
       )}

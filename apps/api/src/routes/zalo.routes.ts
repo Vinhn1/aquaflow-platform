@@ -18,9 +18,27 @@ export function createZaloRouter(): Router {
     const proto = req.get('x-forwarded-proto') || req.protocol;
     const host = req.get('x-forwarded-host') || req.get('host');
     const baseUrl = process.env.API_BASE_URL || `${proto}://${host}`;
-    const redirectUri = (req.query.redirectUri as string) || `${baseUrl}/api/v1/zalo/auth/callback`;
+    const redirectUri = process.env.ZALO_OA_REDIRECT_URI || (req.query.redirectUri as string) || `${baseUrl}/api/v1/zalo/auth/callback`;
     const authUrl = zaloOAClient.getAuthorizationUrl(redirectUri);
-    return res.json({ success: true, data: { authUrl } });
+    return res.json({ success: true, data: { authUrl, redirectUri } });
+  });
+
+  // POST /api/v1/zalo/tokens — Cập nhật Access Token thủ công từ trang quản trị
+  router.post('/tokens', (req, res) => {
+    try {
+      const { accessToken, refreshToken, expiresIn } = req.body;
+      if (!accessToken) {
+        return res.status(400).json({ success: false, message: 'Vui lòng cung cấp Access Token' });
+      }
+      zaloOAClient.updateTokens(accessToken, refreshToken, expiresIn);
+      return res.json({
+        success: true,
+        message: 'Đã cập nhật Token Zalo OA thành công',
+        data: zaloOAClient.getStatus(),
+      });
+    } catch (error: any) {
+      return res.status(500).json({ success: false, message: error.message });
+    }
   });
 
   // GET /api/v1/zalo/auth/callback — Callback khi Admin chấp thuận cấp quyền trên Zalo
