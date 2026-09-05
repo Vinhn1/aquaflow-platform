@@ -168,11 +168,47 @@ export const ZaloMessaging: React.FC = () => {
     }
   };
 
+  // Đồng bộ hội thoại từ Zalo OA
+  const [isSyncing, setIsSyncing] = useState(false);
+  const handleSyncZalo = async () => {
+    try {
+      setIsSyncing(true);
+      const res = await fetch('/api/v1/zalo/sync', { method: 'POST' });
+      if (res.ok) {
+        const json = await res.json();
+        toast.success(json.message || 'Đã đồng bộ tin nhắn từ Zalo OA');
+        await fetchConversations();
+        if (selectedConvId) {
+          await fetchMessages(selectedConvId);
+        }
+      }
+    } catch {
+      toast.error('Lỗi khi đồng bộ từ Zalo OA');
+    } finally {
+      setIsSyncing(false);
+    }
+  };
+
   useEffect(() => {
-    fetchConversations();
+    // Tự động sync 1 lần khi mở trang
+    fetch('/api/v1/zalo/sync', { method: 'POST' })
+      .then(() => fetchConversations())
+      .catch(() => fetchConversations());
+
     fetchBroadcasts();
     fetchStats();
   }, [filterStatus]);
+
+  // Polling tự động mỗi 6 giây để cập nhật tin nhắn realtime
+  useEffect(() => {
+    const timer = setInterval(() => {
+      fetchConversations();
+      if (selectedConvId) {
+        fetchMessages(selectedConvId);
+      }
+    }, 6000);
+    return () => clearInterval(timer);
+  }, [selectedConvId]);
 
   useEffect(() => {
     if (selectedConvId) {
@@ -282,13 +318,49 @@ export const ZaloMessaging: React.FC = () => {
         <div>
           <div className="flex items-center gap-3">
             <h1 className="text-xl font-bold text-slate-800">Quản Trị Tin Nhắn Zalo &amp; CSKH</h1>
-            <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-bold bg-emerald-100 text-emerald-800 border border-emerald-300">
-              <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
-              Zalo OA Đang Kết Nối
-            </span>
+            {stats?.zaloOAStatus?.hasAccessToken ? (
+              <div className="flex items-center gap-2">
+                <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-bold bg-emerald-100 text-emerald-800 border border-emerald-300">
+                  <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
+                  Zalo OA Đang Hoạt Động (OA ID: {stats.zaloOAStatus.oaId})
+                </span>
+                <button
+                  onClick={handleSyncZalo}
+                  disabled={isSyncing}
+                  className="inline-flex items-center gap-1.5 px-3 py-0.5 rounded-full text-xs font-semibold bg-blue-50 hover:bg-blue-100 text-blue-700 border border-blue-200 transition cursor-pointer disabled:opacity-50"
+                  title="Kéo tin nhắn mới nhất từ Zalo OA về hệ thống"
+                >
+                  <svg className={`w-3 h-3 ${isSyncing ? 'animate-spin text-blue-600' : 'text-blue-600'}`} fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                  </svg>
+                  {isSyncing ? 'Đang đồng bộ...' : 'Đồng bộ tin Zalo'}
+                </button>
+              </div>
+            ) : (
+              <a
+                href="/api/v1/zalo/auth/url"
+                onClick={async (e) => {
+                  e.preventDefault();
+                  try {
+                    const res = await fetch('/api/v1/zalo/auth/url');
+                    const json = await res.json();
+                    if (json.data?.authUrl) {
+                      window.open(json.data.authUrl, '_blank');
+                    }
+                  } catch {
+                    toast.error('Không thể lấy URL cấp quyền Zalo OA');
+                  }
+                }}
+                className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-bold bg-blue-50 hover:bg-blue-100 text-blue-700 border border-blue-200 cursor-pointer transition"
+                title="Nhấn để mở trang xác thực cấp quyền Zalo Official Account"
+              >
+                <span className="w-2 h-2 rounded-full bg-blue-500"></span>
+                Zalo OA (ID: {stats?.zaloOAStatus?.oaId || '2562028218754028209'}) · Nhấn Cấp Quyền OAuth
+              </a>
+            )}
           </div>
           <p className="text-xs text-slate-500 mt-1">
-            Trung tâm tiếp nhận hội thoại 2 chiều, phản hồi trực tiếp và gửi thông báo ZNS tự động
+            Trung tâm tiếp nhận hội thoại 2 chiều, phản hồi trực tiếp và gửi thông báo ZNS tự động qua CSDL PostgreSQL &amp; Zalo OA API
           </p>
         </div>
 
@@ -702,16 +774,16 @@ export const ZaloMessaging: React.FC = () => {
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
             <div className="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm">
               <div className="text-xs font-bold text-slate-400 uppercase tracking-wide">Tổng Hội Thoại CSKH</div>
-              <div className="text-2xl font-extrabold text-slate-800 mt-1">{stats?.totalConversations || 142}</div>
-              <div className="text-xs text-emerald-600 font-semibold mt-1">Đang mở: {stats?.openConversations || 4} cuộc</div>
+              <div className="text-2xl font-extrabold text-slate-800 mt-1">{stats?.totalConversations ?? 0}</div>
+              <div className="text-xs text-emerald-600 font-semibold mt-1">Đang mở: {stats?.openConversations ?? 0} cuộc</div>
             </div>
 
             <div className="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm">
               <div className="text-xs font-bold text-slate-400 uppercase tracking-wide">Thuê Bao Nhận Broadcast</div>
               <div className="text-2xl font-extrabold text-blue-600 mt-1">
-                {stats?.totalBroadcastRecipients?.toLocaleString('vi-VN') || '7.270'}
+                {(stats?.totalBroadcastRecipients ?? 0).toLocaleString('vi-VN')}
               </div>
-              <div className="text-xs text-slate-500 mt-1">{stats?.totalBroadcasts || 2} đợt phát sóng</div>
+              <div className="text-xs text-slate-500 mt-1">{stats?.totalBroadcasts ?? 0} đợt phát sóng</div>
             </div>
 
             <div className="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm">

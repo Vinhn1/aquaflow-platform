@@ -50,7 +50,14 @@ const MEDIA_BANNERS = [
 ];
 
 export const HomePage: React.FC<HomePageProps> = ({ onNavigate, onOpenVietQr, user }) => {
-  const [customerCode] = useState('CM102938');
+  // Lay danh sach dong ho da lien ket that cua nguoi dung tu PostgreSQL
+  const { data: userMeters } = useApi(
+    () => apiClient.get<any[]>('/api/v1/customers/meters'),
+    []
+  );
+
+  const activeMeter = userMeters?.find((m: any) => m.isDefault) || userMeters?.[0];
+  const customerCode = activeMeter?.customerCode || 'CM102938';
   const [activeMediaIndex, setActiveMediaIndex] = useState(0);
   const [selectedNews, setSelectedNews] = useState<NewsItem | null>(null);
 
@@ -176,6 +183,48 @@ export const HomePage: React.FC<HomePageProps> = ({ onNavigate, onOpenVietQr, us
             Tài khoản
           </button>
         </div>
+
+        {/* Thông tin Mã danh bộ đang xem */}
+        {activeMeter && (
+          <div
+            style={{
+              margin: '-4px 0 12px 0',
+              padding: '6px 12px',
+              backgroundColor: 'rgba(255, 255, 255, 0.95)',
+              borderRadius: '8px',
+              boxShadow: '0 1px 3px rgba(0,0,0,0.05)',
+              border: '1px solid #E2E8F0',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+              fontSize: '11.5px',
+            }}
+          >
+            <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+              <span style={{ color: '#0369A1', fontWeight: 700 }}>Danh bạ:</span>
+              <span style={{ fontWeight: 800, color: '#0F172A', fontFamily: 'monospace' }}>
+                {customerCode}
+              </span>
+              <span style={{ color: '#64748B', fontSize: '11px' }}>
+                ({activeMeter.label || 'Nhà riêng'})
+              </span>
+            </div>
+            <button
+              onClick={() => onNavigate('ACCOUNT')}
+              style={{
+                fontSize: '11px',
+                fontWeight: 700,
+                color: '#0284C7',
+                background: 'none',
+                border: 'none',
+                cursor: 'pointer',
+                padding: '2px 6px',
+              }}
+            >
+              Đổi đồng hồ ›
+            </button>
+          </div>
+        )}
 
         {/* ================================================================
          * 2. DỊCH VỤ — 3 circle icons chính

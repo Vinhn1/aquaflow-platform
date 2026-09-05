@@ -34,13 +34,6 @@ interface StaffMember {
   employeeCode?: string;
 }
 
-const DEFAULT_FIELD_WORKERS: StaffMember[] = [
-  { id: 'st-01', fullName: 'Trần Văn Hùng', phone: '0918 345 678', role: 'FIELD_WORKER', employeeCode: 'KT-01' },
-  { id: 'st-02', fullName: 'Lê Văn Minh', phone: '0919 456 789', role: 'FIELD_WORKER', employeeCode: 'KT-02' },
-  { id: 'st-03', fullName: 'Nguyễn Thành Đạt', phone: '0918 776 554', role: 'FIELD_WORKER', employeeCode: 'KT-03' },
-  { id: 'st-04', fullName: 'Phạm Quốc Tuấn', phone: '0945 223 344', role: 'FIELD_WORKER', employeeCode: 'KT-04' },
-];
-
 const CATEGORY_NAMES: Record<string, string> = {
   PIPE_BURST_LEAK: 'Rò rỉ / Bể đường ống nước',
   TURBID_DIRTY_WATER: 'Nước đục / Cặn vàng / Mùi lạ',
@@ -60,12 +53,12 @@ export const Complaints: React.FC = () => {
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [previewImage, setPreviewImage] = useState<string | null>(null);
 
-  // Danh sach tho sua chua
-  const [fieldWorkers, setFieldWorkers] = useState<StaffMember[]>(DEFAULT_FIELD_WORKERS);
+  // Danh sach tho sua chua tu API
+  const [fieldWorkers, setFieldWorkers] = useState<StaffMember[]>([]);
 
   // Modal Dieu phoi tho
   const [isDispatchModalOpen, setIsDispatchModalOpen] = useState(false);
-  const [selectedWorkerId, setSelectedWorkerId] = useState<string>(DEFAULT_FIELD_WORKERS[0].id);
+  const [selectedWorkerId, setSelectedWorkerId] = useState<string>('');
   const [dispatchNote, setDispatchNote] = useState('Đã xuất phát kiểm tra và xử lý sự cố hiện trường.');
   const [submittingDispatch, setSubmittingDispatch] = useState(false);
 

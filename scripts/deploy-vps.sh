@@ -14,19 +14,20 @@ fi
 
 echo "[AquaFlow Deploy] 2. Build Docker images va khoi chay co so du lieu..."
 docker compose -f docker-compose.prod.yml --env-file .env.production up -d postgres
+docker compose -f docker-compose.prod.yml --env-file .env.production build api
 
 echo "[AquaFlow Deploy] 3. Doi PostgreSQL khoi dong hoan tat..."
 sleep 5
 
-echo "[AquaFlow Deploy] 4. Thuc thi Prisma Migration & Seed du lieu vao CSDL..."
-docker compose -f docker-compose.prod.yml --env-file .env.production run --rm api npx prisma migrate deploy
-docker compose -f docker-compose.prod.yml --env-file .env.production run --rm api npx tsx prisma/seed.ts
+echo "[AquaFlow Deploy] 4. Thuc thi Prisma Schema Sync & Seed du lieu vao CSDL..."
+docker compose -f docker-compose.prod.yml --env-file .env.production run --rm --user root api npx prisma db push --schema=apps/api/prisma/schema.prisma --accept-data-loss
+docker compose -f docker-compose.prod.yml --env-file .env.production run --rm --user root api npx tsx apps/api/prisma/seed.ts
 
 echo "[AquaFlow Deploy] 5. Khoi dong toan bo he thong (API + Admin Portal)..."
 docker compose -f docker-compose.prod.yml --env-file .env.production up -d --build
 
 echo "[AquaFlow Deploy] 6. Kiem tra trang thai he thong..."
-docker compose -f docker-compose.prod.yml ps
+docker compose -f docker-compose.prod.yml --env-file .env.production ps
 
 echo "=========================================================================="
 echo " TRIEN KHAI HOAN TAT!"

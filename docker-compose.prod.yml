@@ -1,5 +1,3 @@
-version: '3.8'
-
 services:
   postgres:
     image: postgres:16-alpine
@@ -31,7 +29,7 @@ services:
     environment:
       NODE_ENV: production
       PORT: 3000
-      DATABASE_URL: postgresql://${POSTGRES_USER:-aquaflow_user}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB:-aquaflow_cawaco}?schema=public
+      DATABASE_URL: ${DATABASE_URL:-postgresql://${POSTGRES_USER:-aquaflow_user}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB:-aquaflow_cawaco}?schema=public}
       JWT_SECRET: ${JWT_SECRET}
       JWT_EXPIRES_IN: ${JWT_EXPIRES_IN:-7d}
       PAYMENT_WEBHOOK_SECRET: ${PAYMENT_WEBHOOK_SECRET}
