@@ -14,6 +14,19 @@ export const InvoicePage: React.FC<InvoicePageProps> = ({ onOpenVietQr }) => {
   const [activeTab, setActiveTab] = useState<'INVOICES' | 'CHART' | 'TARIFF'>('INVOICES');
   const [selectedInvoice, setSelectedInvoice] = useState<any | null>(null);
 
+  // Tải danh bạ mặc định của khách hàng
+  const { data: userMeters } = useApi(() => apiClient.get<any[]>('/api/v1/customers/meters'), []);
+
+  React.useEffect(() => {
+    if (userMeters && userMeters.length > 0) {
+      const def = userMeters.find((m: any) => m.isDefault) || userMeters[0];
+      if (def?.customerCode) {
+        setCustomerCode(def.customerCode);
+        setSearchInput(def.customerCode);
+      }
+    }
+  }, [userMeters]);
+
   const {
     data: invoices,
     status,
@@ -21,111 +34,7 @@ export const InvoicePage: React.FC<InvoicePageProps> = ({ onOpenVietQr }) => {
     refetch,
   } = useApi(() => apiClient.get<any[]>(`/api/v1/invoices?customerCode=${customerCode}`), [customerCode]);
 
-  const FALLBACK_INVOICES: Record<string, any[]> = {
-    CM102938: [
-      {
-        id: 'inv-aug-01',
-        customerCode: 'CM102938',
-        period: '2026-08',
-        previousReading: 120,
-        currentReading: 145,
-        consumptionM3: 25,
-        totalAmount: 224250,
-        status: 'UNPAID',
-        dueDate: '2026-09-05',
-        meterId: 'MTR-88291',
-        address: 'Số 204, đường Quang Trung, P. Tân Thành, TP. Cà Mau',
-      },
-      {
-        id: 'inv-jun-01',
-        customerCode: 'CM102938',
-        period: '2026-06',
-        previousReading: 78,
-        currentReading: 98,
-        consumptionM3: 20,
-        totalAmount: 179400,
-        status: 'PAID',
-        paidAt: '2026-07-03T14:20:00Z',
-        dueDate: '2026-07-05',
-        meterId: 'MTR-88291',
-        address: 'Số 204, đường Quang Trung, P. Tân Thành, TP. Cà Mau',
-      },
-      {
-        id: 'inv-may-01',
-        customerCode: 'CM102938',
-        period: '2026-05',
-        previousReading: 60,
-        currentReading: 78,
-        consumptionM3: 18,
-        totalAmount: 161460,
-        status: 'PAID',
-        paidAt: '2026-06-04T09:10:00Z',
-        dueDate: '2026-06-05',
-        meterId: 'MTR-88291',
-        address: 'Số 204, đường Quang Trung, P. Tân Thành, TP. Cà Mau',
-      },
-      {
-        id: 'inv-apr-01',
-        customerCode: 'CM102938',
-        period: '2026-04',
-        previousReading: 43,
-        currentReading: 60,
-        consumptionM3: 17,
-        totalAmount: 152490,
-        status: 'PAID',
-        paidAt: '2026-05-02T11:00:00Z',
-        dueDate: '2026-05-05',
-        meterId: 'MTR-88291',
-        address: 'Số 204, đường Quang Trung, P. Tân Thành, TP. Cà Mau',
-      },
-      {
-        id: 'inv-mar-01',
-        customerCode: 'CM102938',
-        period: '2026-03',
-        previousReading: 24,
-        currentReading: 43,
-        consumptionM3: 19,
-        totalAmount: 170430,
-        status: 'PAID',
-        paidAt: '2026-04-03T16:45:00Z',
-        dueDate: '2026-04-05',
-        meterId: 'MTR-88291',
-        address: 'Số 204, đường Quang Trung, P. Tân Thành, TP. Cà Mau',
-      },
-    ],
-    CM204819: [
-      {
-        id: 'inv-aug-02',
-        customerCode: 'CM204819',
-        period: '2026-08',
-        previousReading: 85,
-        currentReading: 103,
-        consumptionM3: 18,
-        totalAmount: 161460,
-        status: 'PAID',
-        paidAt: '2026-09-01T08:30:00Z',
-        dueDate: '2026-09-05',
-        meterId: 'MTR-44910',
-        address: 'Số 45, đường Lý Bôn, Phường 2, TP. Cà Mau',
-      },
-      {
-        id: 'inv-jul-02',
-        customerCode: 'CM204819',
-        period: '2026-07',
-        previousReading: 68,
-        currentReading: 85,
-        consumptionM3: 17,
-        totalAmount: 152490,
-        status: 'PAID',
-        paidAt: '2026-08-02T09:00:00Z',
-        dueDate: '2026-08-05',
-        meterId: 'MTR-44910',
-        address: 'Số 45, đường Lý Bôn, Phường 2, TP. Cà Mau',
-      },
-    ],
-  };
-
-  const displayInvoices = invoices || (status === 'error' ? (FALLBACK_INVOICES[customerCode] || FALLBACK_INVOICES['CM102938']) : null);
+  const displayInvoices = invoices || null;
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();

@@ -46,7 +46,7 @@ export const ToastProvider: React.FC<{ children: React.ReactNode }> = ({ childre
       <div
         style={{
           position: 'fixed',
-          top: '18px',
+          top: 'calc(var(--safe-top, 38px) + 14px)',
           left: '50%',
           transform: 'translateX(-50%)',
           width: 'calc(100% - 32px)',

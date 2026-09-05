@@ -1,15 +1,73 @@
 import { Router } from 'express';
 import { ZaloMessagingService } from '../services/ZaloMessagingService.js';
+import { zaloOAClient } from '../services/ZaloOAClient.js';
 
 export function createZaloRouter(): Router {
   const router = Router();
 
+  // GET /api/v1/zalo/health — Kiểm tra trạng thái cấu hình Zalo OA
+  router.get('/health', (req, res) => {
+    return res.json({
+      success: true,
+      data: zaloOAClient.getStatus(),
+    });
+  });
+
+  // GET /api/v1/zalo/auth/url — Lấy URL cấp quyền Zalo OA
+  router.get('/auth/url', (req, res) => {
+    const redirectUri = (req.query.redirectUri as string) || `${req.protocol}://${req.get('host')}/api/v1/zalo/auth/callback`;
+    const authUrl = zaloOAClient.getAuthorizationUrl(redirectUri);
+    return res.json({ success: true, data: { authUrl } });
+  });
+
+  // GET /api/v1/zalo/auth/callback — Callback khi Admin chấp thuận cấp quyền trên Zalo
+  router.get('/auth/callback', async (req, res) => {
+    try {
+      const code = req.query.code as string;
+      if (!code) {
+        return res.status(400).send('<h3>Lỗi: Không tìm thấy Authorization Code từ Zalo OA.</h3>');
+      }
+
+      const result = await zaloOAClient.exchangeCode(code);
+      return res.send(`
+        <div style="font-family: Arial, sans-serif; padding: 40px; text-align: center;">
+          <h2 style="color: #16A34A;">Kết nối Zalo OA Thành Công!</h2>
+          <p>AquaFlow CAWACO đã nhận được Access Token và Refresh Token từ Zalo Official Account.</p>
+          <p>Hiệu lực token: <strong>${result.expiresIn} giây</strong></p>
+          <a href="/admin/zalo-cskh" style="display: inline-block; margin-top: 20px; padding: 10px 20px; background: #0284C7; color: #fff; text-decoration: none; border-radius: 6px;">Quay lại Trang Quản Trị CSKH</a>
+        </div>
+      `);
+    } catch (error: any) {
+      return res.status(500).send(`<h3>Lỗi kích hoạt Token: ${error.message}</h3>`);
+    }
+  });
+
+  // POST /api/v1/zalo/sync — Đồng bộ hội thoại & tin nhắn từ Zalo OA
+  router.post('/sync', async (req, res) => {
+    try {
+      const result = await ZaloMessagingService.syncWithZaloOA();
+      return res.json({ success: true, message: `Đã đồng bộ ${result.synced} hội thoại từ Zalo OA`, data: result });
+    } catch (error: any) {
+      return res.status(500).json({ success: false, message: error.message });
+    }
+  });
+
+  // POST /api/v1/zalo/webhook — Tiếp nhận Webhook tin nhắn gửi từ Zalo OA
+  router.post('/webhook', async (req, res) => {
+    try {
+      await ZaloMessagingService.handleWebhook(req.body);
+      return res.json({ error: 0, message: 'Success' });
+    } catch (error: any) {
+      return res.json({ error: 0, message: 'Processed with error' });
+    }
+  });
+
   // GET /api/v1/zalo/conversations — Lấy danh sách hội thoại
-  router.get('/conversations', (req, res) => {
+  router.get('/conversations', async (req, res) => {
     try {
       const status = req.query.status as string | undefined;
       const search = req.query.search as string | undefined;
-      const conversations = ZaloMessagingService.getConversations({ status, search });
+      const conversations = await ZaloMessagingService.getConversations({ status, search });
       return res.json({ success: true, data: conversations });
     } catch (error: any) {
       return res.status(500).json({ success: false, message: error.message });
@@ -17,17 +75,17 @@ export function createZaloRouter(): Router {
   });
 
   // POST /api/v1/zalo/user-conversation — Lấy hoặc tạo cuộc hội thoại cho user Mini App
-  router.post('/user-conversation', (req, res) => {
+  router.post('/user-conversation', async (req, res) => {
     try {
       const { customerCode, fullName, phone, zaloId, avatarUrl } = req.body;
-      const conversation = ZaloMessagingService.getOrCreateConversationForUser({
+      const conversation = await ZaloMessagingService.getOrCreateConversationForUser({
         customerCode,
         fullName,
         phone,
         zaloId,
         avatarUrl,
       });
-      const messages = ZaloMessagingService.getMessages(conversation.id);
+      const messages = await ZaloMessagingService.getMessages(conversation.id);
       return res.json({ success: true, data: { conversation, messages } });
     } catch (error: any) {
       return res.status(500).json({ success: false, message: error.message });
@@ -35,10 +93,10 @@ export function createZaloRouter(): Router {
   });
 
   // GET /api/v1/zalo/conversations/:id/messages — Lấy tin nhắn của hội thoại
-  router.get('/conversations/:id/messages', (req, res) => {
+  router.get('/conversations/:id/messages', async (req, res) => {
     try {
       const conversationId = req.params.id;
-      const messages = ZaloMessagingService.getMessages(conversationId);
+      const messages = await ZaloMessagingService.getMessages(conversationId);
       return res.json({ success: true, data: messages });
     } catch (error: any) {
       return res.status(500).json({ success: false, message: error.message });
@@ -46,10 +104,10 @@ export function createZaloRouter(): Router {
   });
 
   // POST /api/v1/zalo/conversations/:id/read — Đánh dấu đã đọc
-  router.post('/conversations/:id/read', (req, res) => {
+  router.post('/conversations/:id/read', async (req, res) => {
     try {
       const conversationId = req.params.id;
-      ZaloMessagingService.markAsRead(conversationId);
+      await ZaloMessagingService.markAsRead(conversationId);
       return res.json({ success: true, message: 'Marked as read' });
     } catch (error: any) {
       return res.status(500).json({ success: false, message: error.message });
@@ -57,14 +115,14 @@ export function createZaloRouter(): Router {
   });
 
   // PATCH /api/v1/zalo/conversations/:id/status — Cập nhật trạng thái
-  router.patch('/conversations/:id/status', (req, res) => {
+  router.patch('/conversations/:id/status', async (req, res) => {
     try {
       const conversationId = req.params.id;
       const { status } = req.body;
       if (!['OPEN', 'RESOLVED', 'PENDING'].includes(status)) {
         return res.status(400).json({ success: false, message: 'Invalid status' });
       }
-      ZaloMessagingService.updateStatus(conversationId, status);
+      await ZaloMessagingService.updateStatus(conversationId, status);
       return res.json({ success: true, message: 'Status updated' });
     } catch (error: any) {
       return res.status(500).json({ success: false, message: error.message });
@@ -72,14 +130,14 @@ export function createZaloRouter(): Router {
   });
 
   // POST /api/v1/zalo/messages — Mini App gửi tin nhắn
-  router.post('/messages', (req, res) => {
+  router.post('/messages', async (req, res) => {
     try {
       const { conversationId, content, senderName, senderAvatar, type, templateData } = req.body;
       if (!conversationId || !content) {
         return res.status(400).json({ success: false, message: 'Thiếu conversationId hoặc nội dung tin nhắn' });
       }
 
-      const message = ZaloMessagingService.postMessage({
+      const message = await ZaloMessagingService.postMessage({
         conversationId,
         sender: 'CUSTOMER',
         senderName: senderName || 'Khách hàng',
@@ -95,15 +153,15 @@ export function createZaloRouter(): Router {
     }
   });
 
-  // POST /api/v1/zalo/send — CSKH / Admin gửi tin nhắn phản hồi
-  router.post('/send', (req, res) => {
+  // POST /api/v1/zalo/send — CSKH / Admin gửi tin nhắn phản hồi (sẽ gọi Zalo OA API thật nếu có cấu hình)
+  router.post('/send', async (req, res) => {
     try {
       const { conversationId, content, staffName, staffAvatar, type, templateData } = req.body;
       if (!conversationId || !content) {
         return res.status(400).json({ success: false, message: 'Thiếu conversationId hoặc nội dung tin nhắn' });
       }
 
-      const message = ZaloMessagingService.postMessage({
+      const message = await ZaloMessagingService.postMessage({
         conversationId,
         sender: 'OA_STAFF',
         senderName: staffName || 'CSKH CAWACO',
@@ -120,14 +178,14 @@ export function createZaloRouter(): Router {
   });
 
   // POST /api/v1/zalo/broadcast — Gửi thông báo ZNS hàng loạt theo địa bàn
-  router.post('/broadcast', (req, res) => {
+  router.post('/broadcast', async (req, res) => {
     try {
       const { title, type, targetArea, content, sentBy, recipientCount } = req.body;
       if (!title || !content || !targetArea) {
         return res.status(400).json({ success: false, message: 'Thiếu thông tin tiêu đề, khu vực hoặc nội dung' });
       }
 
-      const broadcast = ZaloMessagingService.broadcastNotification({
+      const broadcast = await ZaloMessagingService.broadcastNotification({
         title,
         type: type || 'OUTAGE_ALERT',
         targetArea,
@@ -143,9 +201,9 @@ export function createZaloRouter(): Router {
   });
 
   // GET /api/v1/zalo/broadcasts — Lấy danh sách lịch sử phát sóng
-  router.get('/broadcasts', (req, res) => {
+  router.get('/broadcasts', async (req, res) => {
     try {
-      const broadcasts = ZaloMessagingService.getBroadcasts();
+      const broadcasts = await ZaloMessagingService.getBroadcasts();
       return res.json({ success: true, data: broadcasts });
     } catch (error: any) {
       return res.status(500).json({ success: false, message: error.message });
@@ -153,9 +211,9 @@ export function createZaloRouter(): Router {
   });
 
   // POST /api/v1/zalo/webhook — Tiếp nhận webhook từ Zalo OA Platform
-  router.post('/webhook', (req, res) => {
+  router.post('/webhook', async (req, res) => {
     try {
-      const result = ZaloMessagingService.handleWebhookEvent(req.body);
+      const result = await ZaloMessagingService.handleWebhookEvent(req.body);
       return res.json({ error: 0, message: 'OK', result });
     } catch (error: any) {
       return res.status(500).json({ error: -1, message: error.message });
@@ -163,9 +221,9 @@ export function createZaloRouter(): Router {
   });
 
   // GET /api/v1/zalo/stats — Thống kê Zalo CSKH
-  router.get('/stats', (req, res) => {
+  router.get('/stats', async (req, res) => {
     try {
-      const stats = ZaloMessagingService.getStats();
+      const stats = await ZaloMessagingService.getStats();
       return res.json({ success: true, data: stats });
     } catch (error: any) {
       return res.status(500).json({ success: false, message: error.message });

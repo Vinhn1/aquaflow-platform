@@ -1,11 +1,413 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
 datasource db {
   provider = "postgresql"
   url      = env("DATABASE_URL")
 }
 
-generator client {
-  provider = "prisma-client-js"
+model User {
+  id            String        @id @default(uuid())
+  phone         String?       @unique
+  zaloId        String?       @unique @map("zalo_id")
+  fullName      String        @map("full_name")
+  avatarUrl     String?       @map("avatar_url")
+  role          UserRole      @default(CITIZEN)
+  createdAt     DateTime      @default(now()) @map("created_at")
+  updatedAt     DateTime      @updatedAt @map("updated_at")
+  deletedAt     DateTime?     @map("deleted_at")
+  branchId      String?       @map("branch_id")
+  counterNumber Int?          @map("counter_number")
+  email         String?       @unique
+  employeeCode  String?       @unique @map("employee_code")
+  isActive      Boolean       @default(true) @map("is_active")
+  passwordHash  String?       @map("password_hash")
+  complaints    Complaint[]
+  queueTickets  QueueTicket[]
+  userMeters    UserMeter[]
+  branch        Branch?       @relation(fields: [branchId], references: [id])
+
+  @@map("users")
 }
+
+model Customer {
+  id                String      @id @default(uuid())
+  customerCode      String      @unique @map("customer_code")
+  fullName          String      @map("full_name")
+  address           String
+  phone             String?
+  meterSerialNumber String         @map("meter_serial_number")
+  tariffGroup       TariffGroup    @default(DOMESTIC_TP) @map("tariff_group")
+  branchId          String         @map("branch_id")
+  isActive          Boolean        @default(true) @map("is_active")
+  createdAt         DateTime       @default(now()) @map("created_at")
+  updatedAt         DateTime       @updatedAt @map("updated_at")
+  deletedAt         DateTime?      @map("deleted_at")
+  branch            Branch         @relation(fields: [branchId], references: [id])
+  invoices          Invoice[]
+  userMeters        UserMeter[]
+  meterReadings     MeterReading[]
+
+  @@index([branchId])
+  @@map("customers")
+}
+
+model UserMeter {
+  id         String   @id @default(uuid())
+  userId     String   @map("user_id")
+  customerId String   @map("customer_id")
+  label      String   @default("Nha rieng")
+  isDefault  Boolean  @default(false) @map("is_default")
+  createdAt  DateTime @default(now()) @map("created_at")
+  customer   Customer @relation(fields: [customerId], references: [id], onDelete: Cascade)
+  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, customerId])
+  @@index([userId])
+  @@index([customerId])
+  @@map("user_meters")
+}
+
+model Invoice {
+  id                     String        @id @default(uuid())
+  invoiceCode            String        @unique @map("invoice_code")
+  customerId             String        @map("customer_id")
+  period                 String
+  previousIndex          Int           @map("previous_index")
+  currentIndex           Int           @map("current_index")
+  consumptionM3          Int           @map("consumption_m3")
+  baseAmount             Decimal       @map("base_amount") @db.Decimal(12, 2)
+  vatRate                Decimal       @default(0.05) @map("vat_rate") @db.Decimal(4, 2)
+  vatAmount              Decimal       @map("vat_amount") @db.Decimal(12, 2)
+  environmentalFeeRate   Decimal       @default(0.10) @map("environmental_fee_rate") @db.Decimal(4, 2)
+  environmentalFeeAmount Decimal       @map("environmental_fee_amount") @db.Decimal(12, 2)
+  totalAmount            Decimal       @map("total_amount") @db.Decimal(12, 2)
+  status                 InvoiceStatus @default(UNPAID)
+  dueDate                DateTime      @map("due_date")
+  paidAt                 DateTime?     @map("paid_at")
+  createdAt              DateTime      @default(now()) @map("created_at")
+  updatedAt              DateTime      @updatedAt @map("updated_at")
+  deletedAt              DateTime?     @map("deleted_at")
+  customer               Customer      @relation(fields: [customerId], references: [id])
+  payments               Payment[]
+
+  @@index([customerId, status])
+  @@index([period])
+  @@map("invoices")
+}
+
+model Payment {
+  id                String        @id @default(uuid())
+  invoiceId         String        @map("invoice_id")
+  transactionRef    String        @unique @map("transaction_ref")
+  amount            Decimal       @db.Decimal(12, 2)
+  paymentMethod     PaymentMethod @default(VIETQR) @map("payment_method")
+  status            PaymentStatus @default(PENDING)
+  bankTransactionId String?       @map("bank_transaction_id")
+  rawWebhookPayload Json?         @map("raw_webhook_payload")
+  paidAt            DateTime?     @map("paid_at")
+  createdAt         DateTime      @default(now()) @map("created_at")
+  updatedAt         DateTime      @updatedAt @map("updated_at")
+  invoice           Invoice       @relation(fields: [invoiceId], references: [id])
+
+  @@index([invoiceId])
+  @@index([transactionRef])
+  @@map("payments")
+}
+
+model QueueTicket {
+  id                   String       @id @default(uuid())
+  ticketNumber         String       @map("ticket_number")
+  branchId             String       @map("branch_id")
+  serviceType          ServiceType  @map("service_type")
+  userId               String       @map("user_id")
+  customerName         String       @map("customer_name")
+  status               TicketStatus @default(WAITING)
+  counterId            String?      @map("counter_id")
+  counterName          String?      @map("counter_name")
+  positionInQueue      Int          @default(1) @map("position_in_queue")
+  estimatedWaitMinutes Int          @default(15) @map("estimated_wait_minutes")
+  issuedAt             DateTime     @default(now()) @map("issued_at")
+  calledAt             DateTime?    @map("called_at")
+  completedAt          DateTime?    @map("completed_at")
+  cancelledAt          DateTime?    @map("cancelled_at")
+  branch               Branch       @relation(fields: [branchId], references: [id])
+  user                 User         @relation(fields: [userId], references: [id])
+
+  @@index([branchId, status, issuedAt])
+  @@index([userId, status])
+  @@map("queue_tickets")
+}
+
+model Complaint {
+  id          String            @id @default(uuid())
+  userId      String            @map("user_id")
+  category    ComplaintCategory @default(PIPE_BURST_LEAK)
+  description String
+  latitude    Float
+  longitude   Float
+  addressText String?           @map("address_text")
+  images      Json
+  status      ComplaintStatus   @default(SUBMITTED)
+  adminNote   String?           @map("admin_note")
+  createdAt   DateTime          @default(now()) @map("created_at")
+  updatedAt   DateTime          @updatedAt @map("updated_at")
+  resolvedAt  DateTime?         @map("resolved_at")
+  user        User              @relation(fields: [userId], references: [id])
+
+  @@index([userId, status])
+  @@index([status, createdAt])
+  @@map("complaints")
+}
+
+model News {
+  id              String       @id @default(uuid())
+  title           String
+  slug            String       @unique
+  summary         String
+  content         String
+  category        NewsCategory @default(ANNOUNCEMENT)
+  isOutageAlert   Boolean      @default(false) @map("is_outage_alert")
+  affectedArea    String?      @map("affected_area")
+  outageStartTime DateTime?    @map("outage_start_time")
+  outageEndTime   DateTime?    @map("outage_end_time")
+  isPublished     Boolean      @default(true) @map("is_published")
+  publishedAt     DateTime     @default(now()) @map("published_at")
+  createdAt       DateTime     @default(now()) @map("created_at")
+  updatedAt       DateTime     @updatedAt @map("updated_at")
+  thumbnailUrl    String?      @map("thumbnail_url")
+
+  @@index([category, isPublished, publishedAt])
+  @@map("news")
+}
+
+model Branch {
+  id           String        @id @default(uuid())
+  code         String        @unique
+  name         String
+  address      String
+  latitude     Float
+  longitude    Float
+  phone        String
+  isActive     Boolean       @default(true) @map("is_active")
+  createdAt    DateTime      @default(now()) @map("created_at")
+  updatedAt    DateTime      @updatedAt @map("updated_at")
+  customers    Customer[]
+  queueTickets QueueTicket[]
+  users        User[]
+
+  @@map("branches")
+}
+
+model PaymentAgent {
+  id           String   @id @default(uuid())
+  name         String
+  agentType    String   @map("agent_type")
+  district     String
+  address      String
+  latitude     Float
+  longitude    Float
+  phone        String?
+  openingHours String   @default("07:30 - 17:00") @map("opening_hours")
+  isActive     Boolean  @default(true) @map("is_active")
+  createdAt    DateTime @default(now()) @map("created_at")
+
+  @@map("payment_agents")
+}
+
+model WaterRegistration {
+  id               String             @id @default(uuid())
+  registrationCode String             @unique @map("registration_code")
+  userId           String?            @map("user_id")
+  fullName         String             @map("full_name")
+  phone            String
+  idCardNumber     String             @map("id_card_number")
+  district         String
+  ward             String
+  streetAddress    String             @map("street_address")
+  purpose          TariffGroup        @default(DOMESTIC_TP)
+  attachedDocs     Json
+  status           RegistrationStatus @default(SUBMITTED)
+  estimatedCost    Decimal?           @map("estimated_cost") @db.Decimal(12, 2)
+  adminNote        String?            @map("admin_note")
+  assignedStaffId  String?            @map("assigned_staff_id")
+  createdAt        DateTime           @default(now()) @map("created_at")
+  updatedAt        DateTime           @updatedAt @map("updated_at")
+
+  @@map("water_registrations")
+}
+
+model CustomerSurvey {
+  id                String   @id @default(uuid())
+  userId            String?  @map("user_id")
+  customerCode      String?  @map("customer_code")
+  waterQualityScore Int      @map("water_quality_score")
+  serviceScore      Int      @map("service_score")
+  supportScore      Int      @map("support_score")
+  comment           String?
+  createdAt         DateTime @default(now()) @map("created_at")
+
+  @@map("customer_surveys")
+}
+
+model CustomerFeedback {
+  id           String    @id @default(uuid())
+  ticketCode   String    @unique @map("ticket_code")
+  userId       String?   @map("user_id")
+  fullName     String    @map("full_name")
+  phone        String
+  email        String?
+  title        String
+  content      String
+  category     String    @default("GOP_Y")
+  replyContent String?   @map("reply_content")
+  isResolved   Boolean   @default(false) @map("is_resolved")
+  createdAt    DateTime  @default(now()) @map("created_at")
+  resolvedAt   DateTime? @map("resolved_at")
+
+  @@map("customer_feedbacks")
+}
+
+model WaterNetworkNode {
+  id          String   @id @default(uuid())
+  nodeType    String   @map("node_type")
+  name        String
+  code        String   @unique
+  latitude    Float
+  longitude   Float
+  status      String   @default("NORMAL")
+  capacityM3  Float?   @map("capacity_m3")
+  description String?
+  createdAt   DateTime @default(now()) @map("created_at")
+
+  @@map("water_network_nodes")
+}
+
+// 6. Bao cao chi so dong ho nuoc (tu bao)
+enum MeterReadingStatus {
+  PENDING_REVIEW
+  APPROVED
+  REJECTED
+}
+
+model MeterReading {
+  id              String             @id @default(uuid())
+  customerCode    String             @map("customer_code")
+  meterId         String             @map("meter_id")
+  period          String             // e.g. "2026-09"
+  previousReading Int                @map("previous_reading")
+  currentReading  Int                @map("current_reading")
+  consumptionM3   Int                @map("consumption_m3")
+  photoUrl        String?            @map("photo_url")
+  notes           String?
+  status          MeterReadingStatus @default(PENDING_REVIEW)
+  submittedAt     DateTime           @default(now()) @map("submitted_at")
+  userId          String?            @map("user_id")
+
+  customer        Customer           @relation(fields: [customerCode], references: [customerCode])
+
+  @@index([customerCode, period])
+  @@index([status])
+  @@map("meter_readings")
+}
+
+// 7. Zalo OA CSKH - Hoi thoai, tin nhan, broadcast
+enum ZaloConvStatus {
+  OPEN
+  RESOLVED
+  PENDING
+}
+
+enum ZaloSender {
+  CUSTOMER
+  OA_STAFF
+  SYSTEM
+}
+
+enum ZaloMsgType {
+  TEXT
+  IMAGE
+  ZNS_TEMPLATE
+  SYSTEM_ALERT
+}
+
+enum ZaloMsgStatus {
+  SENT
+  DELIVERED
+  SEEN
+}
+
+enum ZaloBroadcastType {
+  OUTAGE_ALERT
+  BILLING_REMINDER
+  MAINTENANCE
+  GENERAL
+}
+
+enum ZaloBroadcastStatus {
+  COMPLETED
+  IN_PROGRESS
+  FAILED
+}
+
+model ZaloConversation {
+  id            String         @id @default(uuid())
+  customerCode  String?        @map("customer_code")
+  customerName  String         @map("customer_name")
+  phone         String
+  zaloUserId    String         @unique @map("zalo_user_id")
+  avatarUrl     String?        @map("avatar_url")
+  lastMessage   String         @default("") @map("last_message")
+  lastMessageAt DateTime       @default(now()) @map("last_message_at")
+  unreadCount   Int            @default(0) @map("unread_count")
+  status        ZaloConvStatus @default(OPEN)
+  tags          String[]       @default([])
+  address       String?
+  createdAt     DateTime       @default(now()) @map("created_at")
+
+  messages      ZaloMessage[]
+
+  @@index([status, lastMessageAt])
+  @@map("zalo_conversations")
+}
+
+model ZaloMessage {
+  id             String           @id @default(uuid())
+  conversationId String           @map("conversation_id")
+  sender         ZaloSender
+  senderName     String           @map("sender_name")
+  senderAvatar   String?          @map("sender_avatar")
+  content        String
+  type           ZaloMsgType      @default(TEXT)
+  templateData   Json?            @map("template_data")
+  status         ZaloMsgStatus    @default(DELIVERED)
+  createdAt      DateTime         @default(now()) @map("created_at")
+
+  conversation   ZaloConversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+
+  @@index([conversationId, createdAt])
+  @@map("zalo_messages")
+}
+
+model ZaloBroadcast {
+  id             String              @id @default(uuid())
+  title          String
+  type           ZaloBroadcastType
+  targetArea     String              @map("target_area")
+  recipientCount Int                 @default(0) @map("recipient_count")
+  successCount   Int                 @default(0) @map("success_count")
+  failedCount    Int                 @default(0) @map("failed_count")
+  sentAt         DateTime            @default(now()) @map("sent_at")
+  status         ZaloBroadcastStatus @default(COMPLETED)
+  content        String
+  sentBy         String              @map("sent_by")
+
+  @@index([sentAt])
+  @@map("zalo_broadcasts")
+}
+
+
 
 enum UserRole {
   CITIZEN
@@ -87,301 +489,12 @@ enum NewsCategory {
   TARIFF_POLICY
 }
 
-model User {
-  id            String         @id @default(uuid())
-  phone         String?        @unique
-  zaloId        String?        @unique @map("zalo_id")
-  fullName      String         @map("full_name")
-  avatarUrl     String?        @map("avatar_url")
-  role          UserRole       @default(CITIZEN)
-  employeeCode  String?        @unique @map("employee_code") // Ma nhan vien (e.g. CW-889, CW-ADMIN)
-  email         String?        @unique
-  passwordHash  String?        @map("password_hash")
-  branchId      String?        @map("branch_id")
-  counterNumber Int?           @map("counter_number") // Quay giao dich phan cong (1, 2, 3, 4)
-  isActive      Boolean        @default(true) @map("is_active")
-  createdAt     DateTime       @default(now()) @map("created_at")
-  updatedAt     DateTime       @updatedAt @map("updated_at")
-  deletedAt     DateTime?      @map("deleted_at")
-
-  branch        Branch?        @relation(fields: [branchId], references: [id])
-  userMeters    UserMeter[]
-  queueTickets  QueueTicket[]
-  complaints    Complaint[]
-
-  @@map("users")
-}
-
-model Customer {
-  id                String       @id @default(uuid())
-  customerCode      String       @unique @map("customer_code") // Ma danh bo (e.g. CM102938)
-  fullName          String       @map("full_name")
-  address           String
-  phone             String?
-  meterSerialNumber String       @map("meter_serial_number")
-  tariffGroup       TariffGroup  @default(DOMESTIC_TP) @map("tariff_group")
-  branchId          String       @map("branch_id")
-  isActive          Boolean      @default(true) @map("is_active")
-  createdAt         DateTime     @default(now()) @map("created_at")
-  updatedAt         DateTime     @updatedAt @map("updated_at")
-  deletedAt         DateTime?    @map("deleted_at")
-
-  branch            Branch       @relation(fields: [branchId], references: [id])
-  userMeters        UserMeter[]
-  invoices          Invoice[]
-
-  @@index([branchId])
-  @@map("customers")
-}
-
-model UserMeter {
-  id           String    @id @default(uuid())
-  userId       String    @map("user_id")
-  customerId   String    @map("customer_id")
-  label        String    @default("Nha rieng") // e.g. "Nha rieng", "Nha tro", "Nha bo me"
-  isDefault    Boolean   @default(false) @map("is_default")
-  createdAt    DateTime  @default(now()) @map("created_at")
-
-  user         User      @relation(fields: [userId], references: [id], onDelete: Cascade)
-  customer     Customer  @relation(fields: [customerId], references: [id], onDelete: Cascade)
-
-  @@unique([userId, customerId])
-  @@index([userId])
-  @@index([customerId])
-  @@map("user_meters")
-}
-
-model Invoice {
-  id                     String         @id @default(uuid())
-  invoiceCode            String         @unique @map("invoice_code") // e.g. "INV-2026-08-001"
-  customerId             String         @map("customer_id")
-  period                 String         // e.g. "2026-08"
-  previousIndex          Int            @map("previous_index")
-  currentIndex           Int            @map("current_index")
-  consumptionM3          Int            @map("consumption_m3")
-  baseAmount             Decimal        @map("base_amount") @db.Decimal(12, 2)
-  vatRate                Decimal        @default(0.05) @map("vat_rate") @db.Decimal(4, 2) // 5%
-  vatAmount              Decimal        @map("vat_amount") @db.Decimal(12, 2)
-  environmentalFeeRate   Decimal        @default(0.10) @map("environmental_fee_rate") @db.Decimal(4, 2) // 10%
-  environmentalFeeAmount Decimal        @map("environmental_fee_amount") @db.Decimal(12, 2)
-  totalAmount            Decimal        @map("total_amount") @db.Decimal(12, 2)
-  status                 InvoiceStatus  @default(UNPAID)
-  dueDate                DateTime       @map("due_date")
-  paidAt                 DateTime?      @map("paid_at")
-  createdAt              DateTime       @default(now()) @map("created_at")
-  updatedAt              DateTime       @updatedAt @map("updated_at")
-  deletedAt              DateTime?      @map("deleted_at")
-
-  customer               Customer       @relation(fields: [customerId], references: [id])
-  payments               Payment[]
-
-  @@index([customerId, status])
-  @@index([period])
-  @@map("invoices")
-}
-
-model Payment {
-  id                 String         @id @default(uuid())
-  invoiceId          String         @map("invoice_id")
-  transactionRef     String         @unique @map("transaction_ref") // Unique Payment Reference
-  amount             Decimal        @db.Decimal(12, 2)
-  paymentMethod      PaymentMethod  @default(VIETQR) @map("payment_method")
-  status             PaymentStatus  @default(PENDING)
-  bankTransactionId  String?        @map("bank_transaction_id")
-  rawWebhookPayload  Json?          @map("raw_webhook_payload")
-  paidAt             DateTime?      @map("paid_at")
-  createdAt          DateTime       @default(now()) @map("created_at")
-  updatedAt          DateTime       @updatedAt @map("updated_at")
-
-  invoice            Invoice        @relation(fields: [invoiceId], references: [id])
-
-  @@index([invoiceId])
-  @@index([transactionRef])
-  @@map("payments")
-}
-
-model QueueTicket {
-  id                    String        @id @default(uuid())
-  ticketNumber          String        @map("ticket_number") // e.g. "A-101"
-  branchId              String        @map("branch_id")
-  serviceType           ServiceType   @map("service_type")
-  userId                String        @map("user_id")
-  customerName          String        @map("customer_name")
-  status                TicketStatus  @default(WAITING)
-  counterId             String?       @map("counter_id")
-  counterName           String?       @map("counter_name")
-  positionInQueue       Int           @default(1) @map("position_in_queue")
-  estimatedWaitMinutes  Int           @default(15) @map("estimated_wait_minutes")
-  issuedAt              DateTime      @default(now()) @map("issued_at")
-  calledAt              DateTime?     @map("called_at")
-  completedAt           DateTime?     @map("completed_at")
-  cancelledAt           DateTime?     @map("cancelled_at")
-
-  user                  User          @relation(fields: [userId], references: [id])
-  branch                Branch        @relation(fields: [branchId], references: [id])
-
-  @@index([branchId, status, issuedAt])
-  @@index([userId, status])
-  @@map("queue_tickets")
-}
-
-model Complaint {
-  id           String             @id @default(uuid())
-  userId       String             @map("user_id")
-  category     ComplaintCategory  @default(PIPE_BURST_LEAK)
-  description  String
-  latitude     Float
-  longitude    Float
-  addressText  String?            @map("address_text")
-  images       Json               // Array of image URLs (max 3)
-  status       ComplaintStatus    @default(SUBMITTED)
-  adminNote    String?            @map("admin_note")
-  createdAt    DateTime           @default(now()) @map("created_at")
-  updatedAt    DateTime           @updatedAt @map("updated_at")
-  resolvedAt   DateTime?          @map("resolved_at")
-
-  user         User               @relation(fields: [userId], references: [id])
-
-  @@index([userId, status])
-  @@index([status, createdAt])
-  @@map("complaints")
-}
-
-model News {
-  id             String        @id @default(uuid())
-  title          String
-  slug           String        @unique
-  summary        String
-  content        String
-  category       NewsCategory  @default(ANNOUNCEMENT)
-  isOutageAlert  Boolean       @default(false) @map("is_outage_alert")
-  affectedArea   String?       @map("affected_area")
-  thumbnailUrl   String?       @map("thumbnail_url")
-  outageStartTime DateTime?    @map("outage_start_time")
-  outageEndTime   DateTime?    @map("outage_end_time")
-  isPublished    Boolean       @default(true) @map("is_published")
-  publishedAt    DateTime      @default(now()) @map("published_at")
-  createdAt      DateTime      @default(now()) @map("created_at")
-  updatedAt      DateTime      @updatedAt @map("updated_at")
-
-  @@index([category, isPublished, publishedAt])
-  @@map("news")
-}
-
-model Branch {
-  id           String         @id @default(uuid())
-  code         String         @unique // e.g. "CM-HQ-01"
-  name         String
-  address      String
-  latitude     Float
-  longitude    Float
-  phone        String
-  isActive     Boolean        @default(true) @map("is_active")
-  createdAt    DateTime       @default(now()) @map("created_at")
-  updatedAt    DateTime       @updatedAt @map("updated_at")
-
-  users        User[]
-  customers    Customer[]
-  queueTickets QueueTicket[]
-
-  @@map("branches")
-}
-
-// 1. Dai ly thu ho tien nuoc
-model PaymentAgent {
-  id           String   @id @default(uuid())
-  name         String   // e.g. "Bưu điện Trung tâm TP. Cà Mau - VNPost"
-  agentType    String   @map("agent_type") // "VNPOST", "VIETTEL_POST", "PAYOO", "BANK", "STORE"
-  district     String   // "TP_CA_MAU", "THOI_BINH", "TRAN_VAN_THOI",...
-  address      String
-  latitude     Float
-  longitude    Float
-  phone        String?
-  openingHours String   @default("07:30 - 17:00") @map("opening_hours")
-  isActive     Boolean  @default(true) @map("is_active")
-  createdAt    DateTime @default(now()) @map("created_at")
-
-  @@map("payment_agents")
-}
-
-// 2. Ho so dang ky lap moi dong ho nuoc
 enum RegistrationStatus {
-  SUBMITTED     // Da gui ho so
-  DOCS_APPROVED // Da duyet ho so hop le
-  SURVEYING     // Dang khao sat hien truong & lap du toan
-  PAYMENT_DUE   // Cho thanh toan chi phi lap dat
-  INSTALLING    // Dang thi cong gan dong ho
-  COMPLETED     // Da nghiem thu & cap ma danh bo
-  REJECTED      // Tu choi (kem ly do)
-}
-
-model WaterRegistration {
-  id               String             @id @default(uuid())
-  registrationCode String             @unique @map("registration_code") // e.g. "REG-2026-001"
-  userId           String?            @map("user_id")
-  fullName         String             @map("full_name")
-  phone            String
-  idCardNumber     String             @map("id_card_number") // CCCD
-  district         String
-  ward             String
-  streetAddress    String             @map("street_address")
-  purpose          TariffGroup        @default(DOMESTIC_TP)
-  attachedDocs     Json               // URLs CCCD, Giay nha dat
-  status           RegistrationStatus @default(SUBMITTED)
-  estimatedCost    Decimal?           @map("estimated_cost") @db.Decimal(12, 2)
-  adminNote        String?            @map("admin_note")
-  assignedStaffId  String?            @map("assigned_staff_id")
-  createdAt        DateTime           @default(now()) @map("created_at")
-  updatedAt        DateTime           @updatedAt @map("updated_at")
-
-  @@map("water_registrations")
-}
-
-// 3. Khao sat y kien khach hang (CSAT)
-model CustomerSurvey {
-  id                String   @id @default(uuid())
-  userId            String?  @map("user_id")
-  customerCode      String?  @map("customer_code")
-  waterQualityScore Int      @map("water_quality_score") // 1 -> 5 sao
-  serviceScore      Int      @map("service_score")       // 1 -> 5 sao
-  supportScore      Int      @map("support_score")       // 1 -> 5 sao
-  comment           String?
-  createdAt         DateTime @default(now()) @map("created_at")
-
-  @@map("customer_surveys")
-}
-
-// 4. Gop y & khieu nai nguoi dan
-model CustomerFeedback {
-  id           String    @id @default(uuid())
-  ticketCode   String    @unique @map("ticket_code") // e.g. "FB-2026-001"
-  userId       String?   @map("user_id")
-  fullName     String    @map("full_name")
-  phone        String
-  email        String?
-  title        String
-  content      String
-  category     String    @default("GOP_Y") // GOP_Y, KHIEU_NAI, KHEN_NGOI
-  replyContent String?   @map("reply_content")
-  isResolved   Boolean   @default(false) @map("is_resolved")
-  createdAt    DateTime  @default(now()) @map("created_at")
-  resolvedAt   DateTime? @map("resolved_at")
-
-  @@map("customer_feedbacks")
-}
-
-// 5. Ban do ha tang GIS & mang luoi cap nuoc
-model WaterNetworkNode {
-  id          String   @id @default(uuid())
-  nodeType    String   @map("node_type") // "PLANT", "BOOSTER", "HYDRANT", "VALVE", "MAINTENANCE"
-  name        String
-  code        String   @unique
-  latitude    Float
-  longitude   Float
-  status      String   @default("NORMAL") // NORMAL, MAINTENANCE, ALERT
-  capacityM3  Float?   @map("capacity_m3")
-  description String?
-  createdAt   DateTime @default(now()) @map("created_at")
-
-  @@map("water_network_nodes")
+  SUBMITTED
+  DOCS_APPROVED
+  SURVEYING
+  PAYMENT_DUE
+  INSTALLING
+  COMPLETED
+  REJECTED
 }

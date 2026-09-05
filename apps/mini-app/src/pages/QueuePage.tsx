@@ -27,12 +27,27 @@ const SERVICE_LABEL: Record<string, string> = {
 export const QueuePage: React.FC = () => {
   const user = MiniAppAuthService.getStoredUser();
   const [serviceType, setServiceType] = useState('NEW_METER_REGISTRATION');
-  const [customerName, setCustomerName] = useState(user?.fullName || 'Nguyễn Văn An');
-  const [phone, setPhone] = useState(user?.phone || '0918234567');
-  const [customerCode, setCustomerCode] = useState('CM102938');
+  const [customerName, setCustomerName] = useState(user?.fullName || '');
+  const [phone, setPhone] = useState(user?.phone || '');
+  const [customerCode, setCustomerCode] = useState('');
   const [ticket, setTicket] = useState<QueueTicket | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  // Tải mã danh bộ và thông tin thực tế từ tài khoản
+  useEffect(() => {
+    apiClient.get<any[]>('/api/v1/customers/meters').then((meters) => {
+      if (Array.isArray(meters) && meters.length > 0) {
+        const def = meters.find((m: any) => m.isDefault) || meters[0];
+        if (def) {
+          setCustomerCode(def.customerCode);
+          if (!customerName && def.ownerName) {
+            setCustomerName(def.ownerName);
+          }
+        }
+      }
+    }).catch(() => {});
+  }, []);
 
   // Trang thai polling theo doi so
   const [liveTicket, setLiveTicket] = useState<QueueTicket | null>(null);

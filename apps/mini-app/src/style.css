@@ -23,6 +23,8 @@
   --radius-full: var(--radius-full);
   --shadow-card: var(--shadow-card);
   --shadow-floating: var(--shadow-modal);
+  /* Safe Area Top cho Zalo Mini App: Tối thiểu 38px để tránh đè Status Bar (thời gian, pin, sóng) trên Android/iOS */
+  --safe-top: max(38px, env(safe-area-inset-top, 0px), var(--zaui-safe-area-inset-top, 0px));
 }
 
 
@@ -345,11 +347,11 @@ body {
   cursor: pointer;
 }
 
-/* MINIMAL CLEAN SUBPAGE HEADER (Thay thế subpage-hero cồng kềnh) */
+/* MINIMAL CLEAN SUBPAGE HEADER (Tránh Status Bar & Capsule Zalo) */
 .minimal-subpage-header {
   background: #ffffff;
   border-bottom: 1px solid #f1f5f9;
-  padding-top: env(safe-area-inset-top, 0px);
+  padding-top: var(--safe-top, 38px);
   position: sticky;
   top: 0;
   z-index: 50;
@@ -361,7 +363,8 @@ body {
   height: 48px;
   display: flex;
   align-items: center;
-  padding: 0 16px;
+  /* Chừa 96px bên phải để không bao giờ bị nút capsule (3 chấm + X) của Zalo đè lên tiêu đề */
+  padding: 0 96px 0 16px;
 }
 
 .minimal-header-title {
@@ -1441,7 +1444,7 @@ a.nav-item:active {
       hsl(213, 85%, 24%) 50%,
       hsl(215, 90%, 17%) 100%
     );
-  padding: max(48px, calc(18px + env(safe-area-inset-top, 0px))) 18px 52px;
+  padding: max(52px, calc(16px + var(--safe-top, 38px))) 18px 52px;
   position: relative;
   overflow: hidden;
 }
