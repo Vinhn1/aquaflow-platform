@@ -13,7 +13,7 @@
  * 9. Tin tức mới nhất (từ API)
  */
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { useApi } from '../hooks/useApi.js';
 import { apiClient } from '../services/api.js';
 import { UserProfile } from '../services/auth.js';
@@ -41,6 +41,14 @@ const Svg: React.FC<{ children: React.ReactNode; size?: number; stroke?: string 
     {children}
   </svg>
 );
+
+/** Time-based greeting helper */
+const getGreeting = () => {
+  const h = new Date().getHours();
+  if (h < 12) return 'Chào buổi sáng';
+  if (h < 18) return 'Chào buổi chiều';
+  return 'Chào buổi tối';
+};
 
 /* ===== DỮ LIỆU BANNER TRUYỀN THÔNG CAWACO ===== */
 const MEDIA_BANNERS = [
@@ -111,68 +119,68 @@ export const HomePage: React.FC<HomePageProps> = ({ onNavigate, onOpenVietQr, us
   return (
     <>
       {/* ================================================================
-       * 1. HERO SECTION — gradient Ocean Blue + đốm sáng trang trí theo mockup
+       * 1. HERO SECTION — Animated Mesh + Wave SVG
        * ================================================================ */}
       <div className="home-hero">
         {/* Đốm sáng vòng tròn mờ góc trên phải */}
         <div className="hero-glow-circle-tr" />
-        
-        {/* Các dải sóng mờ trang trí chạy ngầm dưới nền */}
+
+        {/* Dải sóng trang trí */}
         <div className="hero-ambient-waves">
-          <svg viewBox="0 0 400 130" preserveAspectRatio="none" className="hero-ambient-svg">
-            <path d="M 0,40 C 130,85 260,15 400,55 L 400,130 L 0,130 Z" fill="rgba(255, 255, 255, 0.07)" />
-            <path d="M 0,65 C 140,25 270,95 400,60 L 400,130 L 0,130 Z" fill="rgba(56, 189, 248, 0.08)" />
+          <svg viewBox="0 0 440 100" preserveAspectRatio="none" className="hero-ambient-svg">
+            <path d="M 0,45 C 110,85 220,10 330,50 C 390,70 430,35 440,45 L 440,100 L 0,100 Z" fill="rgba(255,255,255,0.06)" />
+            <path d="M 0,65 C 130,25 260,90 380,55 C 410,45 430,60 440,60 L 440,100 L 0,100 Z" fill="rgba(56, 189, 248, 0.07)" />
+            <path d="M 0,80 C 100,65 200,90 320,75 C 380,67 420,80 440,78 L 440,100 L 0,100 Z" fill="rgba(255,255,255,0.04)" />
           </svg>
         </div>
 
-        {/* Logo nhỏ góc trên trái trong vòng tròn mờ */}
+        {/* Logo + vòng tròn animated */}
         <div className="home-hero-logo-row">
           <div className="home-hero-logo-wrap">
             <img src="/brand/logo.jpg" alt="Logo CAWACO" className="home-hero-logo" />
           </div>
         </div>
 
-        {/* Tên công ty — 2 dòng, chữ trắng to */}
+        {/* Tên công ty */}
         <h1 className="home-hero-company">
           CÔNG TY CỔ PHẦN<br />CẤP NƯỚC CÀ MAU
         </h1>
-        <p className="home-hero-sub">TP. CÀ MAU · TỈNH CÀ MAU</p>
+        <p className="home-hero-sub">CAWACO · TP. CÀ MAU · TỈNH CÀ MAU</p>
       </div>
 
       {/* ================================================================
-       * SCROLLABLE CONTENT — bắt đầu overlap từ hero
+       * SCROLLABLE CONTENT
        * ================================================================ */}
       <div className="home-content">
 
         {/* ---- Greeting Card (overlap hero) ---- */}
-        <div className="greeting-card" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+        <div className="greeting-card">
+          <div style={{ display: 'flex', alignItems: 'center', gap: '11px' }}>
             {user?.avatarUrl ? (
               <img
                 src={user.avatarUrl}
                 alt={user.fullName}
-                style={{ width: '40px', height: '40px', borderRadius: '50%', objectFit: 'cover', border: '1.5px solid #E2E8F0' }}
+                style={{
+                  width: '42px', height: '42px', borderRadius: '50%',
+                  objectFit: 'cover',
+                  border: '2.5px solid rgba(3,105,161,0.25)',
+                  boxShadow: '0 0 0 2px rgba(56,189,248,0.20)'
+                }}
               />
             ) : (
-              <div
-                style={{
-                  width: '40px',
-                  height: '40px',
-                  borderRadius: '50%',
-                  backgroundColor: 'var(--cawaco-primary, #0369A1)',
-                  color: '#FFF',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  fontWeight: '700',
-                  fontSize: '14px',
-                }}
-              >
+              <div style={{
+                width: '42px', height: '42px', borderRadius: '50%',
+                background: 'var(--gradient-primary)',
+                color: '#FFF',
+                display: 'flex', alignItems: 'center', justifyContent: 'center',
+                fontWeight: '800', fontSize: '15px',
+                boxShadow: '0 0 0 2.5px rgba(56,189,248,0.25)',
+              }}>
                 {user?.avatarText || 'KH'}
               </div>
             )}
             <div>
-              <div className="greeting-hello">Xin chào</div>
+              <div className="greeting-hello">{getGreeting()}</div>
               <div className="greeting-username">{user?.fullName || 'Khách hàng Zalo'}</div>
             </div>
           </div>
@@ -227,14 +235,14 @@ export const HomePage: React.FC<HomePageProps> = ({ onNavigate, onOpenVietQr, us
         )}
 
         {/* ================================================================
-         * 2. DỊCH VỤ — 3 circle icons chính
+         * 2. DỊCH VỤ — 4-icon grid (+ Báo chỉ số nước)
          * ================================================================ */}
-        <p className="home-section-label">Dịch vụ</p>
-        <div className="service-row">
+        <p className="home-section-label" style={{ marginBottom: '12px' }}>Dịch vụ</p>
+        <div className="service-row anim-fade-up anim-fade-up-1" style={{ marginBottom: '20px' }}>
           {/* Hóa đơn */}
           <button className="svc-item" onClick={() => onNavigate('INVOICES')}>
             <div className="svc-circle svc-orange">
-              <Svg size={26}>
+              <Svg size={22} stroke="#fff">
                 <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
                 <polyline points="14 2 14 8 20 8" />
                 <line x1="16" y1="13" x2="8" y2="13" />
@@ -247,12 +255,11 @@ export const HomePage: React.FC<HomePageProps> = ({ onNavigate, onOpenVietQr, us
           {/* Bốc số */}
           <button className="svc-item" onClick={() => onNavigate('QUEUE')}>
             <div className="svc-circle svc-blue">
-              <Svg size={26}>
+              <Svg size={22} stroke="#fff">
                 <rect x="3" y="4" width="18" height="18" rx="2" ry="2" />
                 <line x1="16" y1="2" x2="16" y2="6" />
                 <line x1="8" y1="2" x2="8" y2="6" />
                 <line x1="3" y1="10" x2="21" y2="10" />
-                <line x1="8" y1="14" x2="8.01" y2="14" />
               </Svg>
             </div>
             <span className="svc-label">Bốc số</span>
@@ -261,13 +268,24 @@ export const HomePage: React.FC<HomePageProps> = ({ onNavigate, onOpenVietQr, us
           {/* Báo sự cố */}
           <button className="svc-item" onClick={() => onNavigate('COMPLAINTS')}>
             <div className="svc-circle svc-slate">
-              <Svg size={26}>
+              <Svg size={22} stroke="#fff">
                 <path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z" />
                 <line x1="12" y1="9" x2="12" y2="13" />
                 <line x1="12" y1="17" x2="12.01" y2="17" />
               </Svg>
             </div>
             <span className="svc-label">Báo sự cố</span>
+          </button>
+
+          {/* Báo chỉ số */}
+          <button className="svc-item" onClick={() => onNavigate('METER_READING')}>
+            <div className="svc-circle svc-green">
+              <Svg size={22} stroke="#fff">
+                <circle cx="12" cy="12" r="10" />
+                <polyline points="12 6 12 12 16 14" />
+              </Svg>
+            </div>
+            <span className="svc-label">Báo chỉ số</span>
           </button>
         </div>
 
@@ -428,21 +446,38 @@ export const HomePage: React.FC<HomePageProps> = ({ onNavigate, onOpenVietQr, us
         </div>
 
         {/* ================================================================
-         * 5. KÊNH CHÍNH THỨC — dark teal card với Zalo OA
+         * 5. KÊNH CHÍNH THỨC — Zalo OA premium card
          * ================================================================ */}
-        <div className="zalo-card">
-          <div className="zalo-card-title">Kênh chính thức</div>
+        <div className="zalo-card" style={{ position: 'relative', overflow: 'hidden', marginBottom: '14px' }}>
+          {/* Decorative glow circle */}
+          <div style={{
+            position: 'absolute', top: '-25px', right: '-25px',
+            width: '110px', height: '110px', borderRadius: '50%',
+            background: 'radial-gradient(circle, rgba(0,104,255,0.22) 0%, transparent 70%)',
+            pointerEvents: 'none',
+          }} />
+          <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '8px' }}>
+            <div style={{
+              background: 'linear-gradient(135deg, #0068FF 0%, #0052CC 100%)',
+              borderRadius: '8px', padding: '4px 10px',
+              fontSize: '10px', fontWeight: 900, color: '#fff', letterSpacing: '0.5px', flexShrink: 0,
+            }}>ZALO OA</div>
+            <div style={{
+              fontSize: '10px', color: 'rgba(255,255,255,0.50)',
+              fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.5px',
+            }}>Kênh chính thức</div>
+          </div>
+          <div className="zalo-card-title" style={{ marginBottom: '4px' }}>CAWACO Cấp nước Cà Mau</div>
           <div className="zalo-card-desc">
             Nhận thông báo lịch cúp nước và cập nhật mới nhất từ CAWACO
           </div>
           <div className="zalo-card-row">
-            {/* Zalo logo circle */}
             <div className="zalo-icon-circle">
               <span style={{ fontSize: '11px', fontWeight: '900', letterSpacing: '-0.5px' }}>ZALO</span>
             </div>
             <div style={{ flex: 1 }}>
               <div className="zalo-oa-name-text">CAWACO Cấp nước Cà Mau</div>
-              <div className="zalo-oa-type">Kênh chính thức</div>
+              <div className="zalo-oa-type">224k+ người quan tâm</div>
             </div>
             <a
               href={ZALO_CONFIG.OA_URL}

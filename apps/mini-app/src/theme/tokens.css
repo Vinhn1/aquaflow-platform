@@ -1,57 +1,100 @@
 /**
- * CAWACO Design Tokens - AquaFlow Platform
+ * CAWACO Design Tokens — AquaFlow Platform v2.0 PRO
  * He thong tokens mau sac va thiet ke nhan dien thuong hieu Cap nuoc Ca Mau
  *
- * Ocean Blue Water Palette (v2):
+ * Ocean Blue Water Palette:
  * - Deep Ocean   (#082F49): Bien sau, nen vung chac
  * - Ocean Blue   (#0369A1): Nuoc bien trong, hien dai
  * - Sapphire     (#0284C7): Dong nuoc chay, primary action
  * - Sky Aqua     (#38BDF8): Bong nuoc nhan, accent sang
- * - Alluvial Sand (#C4952A): Dat phu sa Ca Mau (giu nguyen)
+ * - Alluvial Sand(#C4952A): Dat phu sa Ca Mau (warm accent)
  */
+
+@import url('https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600;700;800;900&family=Plus+Jakarta+Sans:wght@600;700;800&display=swap');
 
 :root {
   /* ── Ocean Blue Brand Core ── */
-  --cawaco-deep:          #082F49;   /* bien sau - darkest */
-  --cawaco-deep-navy:     #0C4A6E;   /* navy ocean */
-  --cawaco-primary:       #0369A1;   /* ocean blue - primary */
-  --cawaco-primary-hover: #025A87;
-  --cawaco-primary-subtle:#E0F2FE;
-  --cawaco-ocean-mid:     #0284C7;   /* sapphire - CTAs */
-  --cawaco-sky:           #38BDF8;   /* sky aqua - accent */
-  --cawaco-sky-subtle:    #E0F9FF;
-  --cawaco-aqua:          #22D3EE;   /* bright aqua highlight */
-  --cawaco-teal:          #0EA5E9;   /* ocean surface (replaces teal) */
-  --cawaco-teal-hover:    #0284C7;
-  --cawaco-teal-subtle:   #E0F2FE;
-  --cawaco-sand:          #C4952A;   /* alluvial sand - accent warm */
-  --cawaco-sand-hover:    #A6721F;
-  --cawaco-sand-subtle:   #FEF8ED;
+  --cawaco-deep:           #082F49;   /* bien sau - darkest */
+  --cawaco-deep-navy:      #0C4A6E;   /* navy ocean */
+  --cawaco-primary:        #0369A1;   /* ocean blue - primary */
+  --cawaco-primary-hover:  #025A87;
+  --cawaco-primary-subtle: #E0F2FE;
+  --cawaco-ocean-mid:      #0284C7;   /* sapphire - CTAs */
+  --cawaco-sky:            #38BDF8;   /* sky aqua - accent */
+  --cawaco-sky-subtle:     #E0F9FF;
+  --cawaco-aqua:           #22D3EE;   /* bright aqua highlight */
+  --cawaco-teal:           #0EA5E9;   /* ocean surface */
+  --cawaco-teal-hover:     #0284C7;
+  --cawaco-teal-subtle:    #E0F2FE;
+  --cawaco-sand:           #C4952A;   /* alluvial sand - accent warm */
+  --cawaco-sand-hover:     #A6721F;
+  --cawaco-sand-subtle:    #FEF8ED;
+
+  /* ── Premium Gradient Tokens ── */
+  --gradient-hero:         linear-gradient(145deg, #082F49 0%, #0C4A6E 35%, #0369A1 70%, #0284C7 100%);
+  --gradient-hero-mesh:    radial-gradient(ellipse at 20% 50%, rgba(14, 165, 233, 0.25) 0%, transparent 50%),
+                           radial-gradient(ellipse at 80% 20%, rgba(56, 189, 248, 0.20) 0%, transparent 50%),
+                           radial-gradient(ellipse at 60% 80%, rgba(34, 211, 238, 0.15) 0%, transparent 50%),
+                           linear-gradient(145deg, #082F49 0%, #0C4A6E 40%, #0369A1 100%);
+  --gradient-primary:      linear-gradient(135deg, #0369A1 0%, #0284C7 100%);
+  --gradient-sky:          linear-gradient(135deg, #0284C7 0%, #38BDF8 100%);
+  --gradient-sand:         linear-gradient(135deg, #C4952A 0%, #E0A93B 100%);
+  --gradient-success:      linear-gradient(135deg, #1E8E5A 0%, #22C55E 100%);
+  --gradient-danger:       linear-gradient(135deg, #D9383A 0%, #F43F5E 100%);
+  --gradient-card-blue:    linear-gradient(135deg, #E0F2FE 0%, #BAE6FD 100%);
+  --gradient-card-orange:  linear-gradient(135deg, #FEF3C7 0%, #FDE68A 100%);
+  --gradient-card-green:   linear-gradient(135deg, #DCFCE7 0%, #BBF7D0 100%);
+  --gradient-card-purple:  linear-gradient(135deg, #F3E8FF 0%, #E9D5FF 100%);
+  --gradient-card-rose:    linear-gradient(135deg, #FFE4E6 0%, #FECDD3 100%);
+  --gradient-sidebar:      linear-gradient(180deg, #031d38 0%, #06335a 50%, #021b33 100%);
+
+  /* ── Glassmorphism ── */
+  --glass-bg:              rgba(255, 255, 255, 0.72);
+  --glass-bg-dark:         rgba(8, 47, 73, 0.65);
+  --glass-border:          rgba(255, 255, 255, 0.50);
+  --glass-border-dark:     rgba(56, 189, 248, 0.20);
+  --glass-shadow:          0 8px 32px rgba(8, 47, 73, 0.15);
+  --glass-blur:            blur(20px);
+  --glass-blur-sm:         blur(12px);
+
+  /* ── Icon Circle Gradients ── */
+  --svc-gradient-blue:     linear-gradient(135deg, #0369A1 0%, #38BDF8 100%);
+  --svc-gradient-orange:   linear-gradient(135deg, #D97706 0%, #FBBF24 100%);
+  --svc-gradient-green:    linear-gradient(135deg, #1E8E5A 0%, #34D399 100%);
+  --svc-gradient-purple:   linear-gradient(135deg, #7C3AED 0%, #A78BFA 100%);
+  --svc-gradient-rose:     linear-gradient(135deg, #BE185D 0%, #FB7185 100%);
+  --svc-gradient-slate:    linear-gradient(135deg, #475569 0%, #94A3B8 100%);
+  --svc-shadow-blue:       0 6px 16px rgba(3, 105, 161, 0.35);
+  --svc-shadow-orange:     0 6px 16px rgba(217, 119, 6, 0.35);
+  --svc-shadow-green:      0 6px 16px rgba(30, 142, 90, 0.35);
+  --svc-shadow-purple:     0 6px 16px rgba(124, 58, 237, 0.35);
+  --svc-shadow-rose:       0 6px 16px rgba(190, 24, 93, 0.35);
+  --svc-shadow-slate:      0 6px 16px rgba(71, 85, 105, 0.30);
 
   /* ── Semantic Feedback ── */
-  --color-success:        #1E8E5A;
-  --color-success-subtle: #EAF6F0;
-  --color-warning:        #D97706;
-  --color-warning-subtle: #FEF3C7;
-  --color-danger:         #D9383A;
-  --color-danger-subtle:  #FDECEC;
-  --color-info:           #0284C7;
-  --color-info-subtle:    #E0F2FE;
+  --color-success:         #1E8E5A;
+  --color-success-subtle:  #EAF6F0;
+  --color-warning:         #D97706;
+  --color-warning-subtle:  #FEF3C7;
+  --color-danger:          #D9383A;
+  --color-danger-subtle:   #FDECEC;
+  --color-info:            #0284C7;
+  --color-info-subtle:     #E0F2FE;
 
   /* ── Surfaces & Backgrounds ── */
-  --color-bg:             #F4F7FB;
-  --color-bg-app:         #F4F7FB;
-  --color-surface:        #FFFFFF;
-  --color-surface-card:   #FFFFFF;
+  --color-bg:              #F0F5FA;
+  --color-bg-app:          #F0F5FA;
+  --color-surface:         #FFFFFF;
+  --color-surface-card:    #FFFFFF;
   --color-surface-elevated: #FFFFFF;
-  --color-border-subtle:  #E2E8F0;
-  --color-border-strong:  #CBD5E1;
+  --color-border-subtle:   #E2E8F0;
+  --color-border-strong:   #CBD5E1;
 
   /* ── Typography ── */
-  --color-text-main:      #0F172A;
-  --color-text-body:      #334155;
-  --color-text-muted:     #64748B;
-  --color-text-inverse:   #FFFFFF;
+  --color-text-main:       #0F172A;
+  --color-text-body:       #334155;
+  --color-text-muted:      #64748B;
+  --color-text-inverse:    #FFFFFF;
 
   /* ── Spacing Scale ── */
   --space-xs:   4px;
@@ -68,15 +111,73 @@
   --radius-md:   12px;
   --radius-lg:   16px;
   --radius-xl:   20px;
+  --radius-2xl:  24px;
   --radius-full: 9999px;
 
   /* ── Elevation & Shadows ── */
-  --shadow-sm:    0 1px 2px rgba(8, 47, 73, 0.06);
-  --shadow-card:  0 4px 14px rgba(3, 105, 161, 0.08);
-  --shadow-hover: 0 8px 20px rgba(3, 105, 161, 0.14);
-  --shadow-modal: 0 20px 40px rgba(8, 47, 73, 0.20);
+  --shadow-xs:     0 1px 2px rgba(8, 47, 73, 0.05);
+  --shadow-sm:     0 1px 3px rgba(8, 47, 73, 0.08), 0 1px 2px rgba(8, 47, 73, 0.06);
+  --shadow-card:   0 4px 16px rgba(3, 105, 161, 0.08), 0 1px 4px rgba(0, 0, 0, 0.04);
+  --shadow-hover:  0 8px 24px rgba(3, 105, 161, 0.16), 0 4px 8px rgba(0, 0, 0, 0.06);
+  --shadow-modal:  0 20px 60px rgba(8, 47, 73, 0.22), 0 8px 24px rgba(0, 0, 0, 0.10);
+  --shadow-float:  0 12px 32px rgba(3, 105, 161, 0.20);
+
+  /* ── Animation Tokens ── */
+  --transition-fast:     150ms cubic-bezier(0.4, 0, 0.2, 1);
+  --transition-base:     250ms cubic-bezier(0.4, 0, 0.2, 1);
+  --transition-smooth:   350ms cubic-bezier(0.4, 0, 0.2, 1);
+  --transition-bounce:   400ms cubic-bezier(0.34, 1.56, 0.64, 1);
+  --transition-spring:   500ms cubic-bezier(0.22, 1, 0.36, 1);
 
   /* ── Typography Font Families ── */
   --font-family-base:    'Be Vietnam Pro', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-  --font-family-display: 'DM Sans', 'Be Vietnam Pro', sans-serif;
+  --font-family-display: 'Plus Jakarta Sans', 'Be Vietnam Pro', sans-serif;
+  --font-family-mono:    'SF Mono', 'Cascadia Code', 'Fira Code', Consolas, monospace;
 }
+
+/* ── Global Keyframe Animations ── */
+
+@keyframes float-bubble {
+  0%, 100% { transform: translate(0, 0) scale(1); }
+  33%       { transform: translate(12px, -18px) scale(1.06); }
+  66%       { transform: translate(-8px, 10px) scale(0.96); }
+}
+
+@keyframes float-bubble-2 {
+  0%, 100% { transform: translate(0, 0) scale(1); }
+  40%       { transform: translate(-14px, -10px) scale(1.08); }
+  75%       { transform: translate(10px, 16px) scale(0.94); }
+}
+
+@keyframes fade-in-scale {
+  from { opacity: 0; transform: scale(0.95) translateY(8px); }
+  to   { opacity: 1; transform: scale(1) translateY(0); }
+}
+
+@keyframes fade-in-up {
+  from { opacity: 0; transform: translateY(16px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes shimmer {
+  0%   { background-position: -200% 0; }
+  100% { background-position: 200% 0; }
+}
+
+@keyframes pulse-ring {
+  0%   { box-shadow: 0 0 0 0 rgba(56, 189, 248, 0.55); }
+  70%  { box-shadow: 0 0 0 10px rgba(56, 189, 248, 0); }
+  100% { box-shadow: 0 0 0 0 rgba(56, 189, 248, 0); }
+}
+
+@keyframes wave-float {
+  0%, 100% { transform: translateY(0) scaleY(1); }
+  50%       { transform: translateY(-4px) scaleY(1.02); }
+}
+
+/* ── Animation Utility Classes ── */
+.anim-fade-up   { animation: fade-in-up var(--transition-smooth) both; }
+.anim-fade-up-1 { animation-delay: 0.05s; }
+.anim-fade-up-2 { animation-delay: 0.10s; }
+.anim-fade-up-3 { animation-delay: 0.15s; }
+.anim-fade-up-4 { animation-delay: 0.20s; }

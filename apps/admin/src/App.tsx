@@ -43,24 +43,34 @@ const AdminLayout: React.FC = () => {
 
   return (
     <div className="flex h-screen bg-slate-50 font-sans">
-      {/* 1. Sidebar Thuong Hieu CAWACO Ocean Navy Gradient */}
-      <aside className="w-64 bg-gradient-to-b from-[#031d38] via-[#06335a] to-[#021b33] text-white flex flex-col justify-between flex-shrink-0 shadow-2xl border-r border-blue-900/30 z-20">
+      {/* 1. Sidebar — CAWACO Ocean Navy Gradient Premium */}
+      <aside className="w-64 bg-gradient-to-b from-[#021628] via-[#05294e] to-[#031d38] text-white flex flex-col justify-between flex-shrink-0 shadow-2xl border-r border-blue-900/20 z-20 relative">
+        {/* Ambient glow top */}
+        <div style={{
+          position: 'absolute', top: 0, left: 0, right: 0, height: '160px',
+          background: 'radial-gradient(ellipse at 50% -20%, rgba(56,189,248,0.14) 0%, transparent 70%)',
+          pointerEvents: 'none',
+        }} />
         <div>
           {/* Brand Header */}
-          <div className="p-5 border-b border-white/10">
-            <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-xl bg-white p-1 flex items-center justify-center shadow-lg border border-sky-300/30 flex-shrink-0 overflow-hidden">
-                <img src="/brand/logo.jpg" alt="CAWACO Logo" className="w-full h-full object-contain" />
+          <div className="px-5 pt-6 pb-4 border-b border-white/[0.08]">
+            <div className="flex items-center gap-3.5">
+              {/* Logo with ring glow */}
+              <div className="relative flex-shrink-0">
+                <div className="w-11 h-11 rounded-2xl bg-white/95 p-1 flex items-center justify-center shadow-lg shadow-sky-950/50 overflow-hidden ring-2 ring-sky-400/30">
+                  <img src="/brand/logo.jpg" alt="CAWACO Logo" className="w-full h-full object-contain" />
+                </div>
+                <span className="absolute -bottom-0.5 -right-0.5 w-3 h-3 bg-emerald-400 rounded-full border-2 border-[#05294e] shadow" title="Hệ thống trực tuyến" />
               </div>
               <div>
-                <div className="font-extrabold text-base tracking-wide text-white font-heading">CAWACO</div>
-                <div className="text-[10px] text-sky-200/90 uppercase tracking-widest font-semibold">Cổng Điều Hành & Quầy</div>
+                <div className="font-black text-[15px] tracking-[0.04em] text-white leading-none mb-0.5">CAWACO</div>
+                <div className="text-[9.5px] text-sky-300/80 uppercase tracking-[0.18em] font-bold leading-none">Cổng Điều Hành</div>
               </div>
             </div>
           </div>
 
-          {/* Navigation Menu (Toàn quyền sử dụng các nghiệp vụ) */}
-          <nav className="p-3 space-y-1.5">
+          {/* Navigation Menu */}
+          <nav className="p-3 space-y-1">
             {/* 1. Gọi Số Quầy Trực Tiếp */}
             <button
               onClick={() => setCurrentView('QUEUE')}
@@ -261,12 +271,12 @@ const AdminLayout: React.FC = () => {
 
       {/* 2. Main Body Content */}
       <div className="flex-1 flex flex-col overflow-hidden">
-        {/* Top Header */}
-        <header className="h-16 bg-white border-b border-slate-200 flex items-center justify-between px-6 z-10">
-          <div className="flex items-center gap-2 text-sm text-slate-500">
-            <span>Cổng Điều Hành</span>
-            <span>/</span>
-            <span className="font-semibold text-slate-800">
+        {/* Top Header — gradient breadcrumb + premium */}
+        <header className="h-16 bg-white/80 backdrop-blur-md border-b border-slate-200/80 flex items-center justify-between px-6 z-10 shadow-sm">
+          <div className="flex items-center gap-2 text-sm">
+            <span className="text-slate-400 font-medium">Cổng Điều Hành</span>
+            <svg className="w-3.5 h-3.5 text-slate-300" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 5l7 7-7 7" /></svg>
+            <span className="font-bold text-slate-800">
               {currentView === 'QUEUE' && 'Gọi Số Quầy Trực Tiếp'}
               {currentView === 'COMPLAINTS' && 'Điều Phối Sự Cố Mạng Lưới'}
               {currentView === 'OUTAGES' && 'Quản Lý Thông Báo & Cúp Nước'}
@@ -275,6 +285,13 @@ const AdminLayout: React.FC = () => {
               {currentView === 'STAFF' && 'Quản Lý Cán Bộ & Phân Ca Làm Việc'}
               {currentView === 'PROFILE' && 'Hồ Sơ Cán Bộ & Thiết Lập Tài Khoản'}
             </span>
+          </div>
+          {/* Live status badge */}
+          <div className="flex items-center gap-3">
+            <div className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-emerald-50 border border-emerald-200">
+              <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
+              <span className="text-xs font-semibold text-emerald-700">Hệ thống trực tuyến</span>
+            </div>
           </div>
         </header>
 

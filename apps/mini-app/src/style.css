@@ -95,11 +95,70 @@ body {
   display: none; /* Đã thay bằng subpage-hero + home-hero */
 }
 
+/* ── MICRO-ANIMATION KEYFRAMES ── */
+@keyframes gradient-shift {
+  0%, 100% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+}
+
+@keyframes float-bubble {
+  0%, 100% { transform: translateY(0px) scale(1); opacity: 0.12; }
+  50% { transform: translateY(-18px) scale(1.08); opacity: 0.20; }
+}
+
+@keyframes float-bubble-2 {
+  0%, 100% { transform: translateY(0px) scale(1); opacity: 0.08; }
+  33% { transform: translateY(-12px) scale(1.05); opacity: 0.15; }
+  66% { transform: translateY(-6px) scale(0.95); opacity: 0.10; }
+}
+
+@keyframes fade-in-up {
+  from { opacity: 0; transform: translateY(16px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes fade-in-scale {
+  from { opacity: 0; transform: scale(0.92); }
+  to   { opacity: 1; transform: scale(1); }
+}
+
+@keyframes shimmer {
+  0%   { background-position: -200% center; }
+  100% { background-position: 200% center; }
+}
+
+@keyframes pulse-ring {
+  0%   { box-shadow: 0 0 0 0 rgba(56, 189, 248, 0.45); }
+  70%  { box-shadow: 0 0 0 10px rgba(56, 189, 248, 0); }
+  100% { box-shadow: 0 0 0 0 rgba(56, 189, 248, 0); }
+}
+
+@keyframes wave-float {
+  0%, 100% { d: path("M 0,20 C 100,45 200,5 300,25 C 380,40 420,15 440,22 L 440,80 L 0,80 Z"); }
+  50%       { d: path("M 0,30 C 90,10 210,45 310,18 C 390,5 420,35 440,28 L 440,80 L 0,80 Z"); }
+}
+
+@keyframes slide-in-right {
+  from { opacity: 0; transform: translateX(20px); }
+  to   { opacity: 1; transform: translateX(0); }
+}
+
+/* ── STAGGER ANIMATION HELPERS ── */
+.anim-fade-up {
+  animation: fade-in-up 0.4s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+.anim-fade-up-1 { animation-delay: 0.05s; }
+.anim-fade-up-2 { animation-delay: 0.10s; }
+.anim-fade-up-3 { animation-delay: 0.15s; }
+.anim-fade-up-4 { animation-delay: 0.20s; }
+.anim-fade-up-5 { animation-delay: 0.25s; }
+.anim-fade-up-6 { animation-delay: 0.30s; }
+
 /* SUBPAGE OCEAN BLUE HERO HEADER — Ocean water gradient + exact original bottom curve */
 .subpage-hero {
   background:
-    radial-gradient(ellipse at 80% 20%, rgba(56, 189, 248, 0.15) 0%, transparent 55%),
-    radial-gradient(ellipse at 20% 80%, rgba(14, 165, 233, 0.10) 0%, transparent 45%),
+    radial-gradient(ellipse at 80% 10%, rgba(56, 189, 248, 0.22) 0%, transparent 50%),
+    radial-gradient(ellipse at 10% 90%, rgba(14, 165, 233, 0.15) 0%, transparent 45%),
     linear-gradient(
       170deg,
       hsl(213, 88%, 28%) 0%,
@@ -410,18 +469,42 @@ body {
   min-height: 0;
 }
 
-/* Cards */
+/* ── CARDS — Base & Premium Variants ── */
 .card {
   background-color: var(--color-surface);
   border-radius: var(--radius-lg);
   padding: 14px;
   margin-bottom: 8px;
   box-shadow: var(--shadow-card);
-  border: 1px solid var(--color-border);
+  border: 1px solid var(--color-border-subtle);
+  transition: box-shadow var(--transition-base), transform var(--transition-fast);
 }
 
-.card:last-child {
-  margin-bottom: 0;
+.card:last-child { margin-bottom: 0; }
+
+/* Premium Card — deeper shadow, subtle gradient border */
+.card-premium {
+  background: #FFFFFF;
+  border-radius: var(--radius-xl);
+  box-shadow: 0 4px 20px rgba(3, 105, 161, 0.08), 0 1px 4px rgba(0,0,0,0.04);
+  border: 1px solid rgba(203, 213, 225, 0.6);
+  overflow: hidden;
+  transition: box-shadow var(--transition-base), transform var(--transition-fast);
+}
+.card-premium:active { transform: scale(0.985); }
+
+/* Card với accent bar bên trái */
+.card-accent-left {
+  border-left: 4px solid var(--cawaco-primary);
+  background: linear-gradient(to right, rgba(224, 242, 254, 0.5), #ffffff);
+}
+.card-accent-left-success {
+  border-left: 4px solid var(--color-success);
+  background: linear-gradient(to right, rgba(234, 246, 240, 0.5), #ffffff);
+}
+.card-accent-left-warning {
+  border-left: 4px solid var(--color-warning);
+  background: linear-gradient(to right, rgba(254, 243, 199, 0.5), #ffffff);
 }
 
 /* Triệt tiêu margin-bottom kép khi .card nằm trong container đã có gap */
@@ -475,52 +558,82 @@ body {
   margin-bottom: 14px;
 }
 
-/* Buttons */
+/* ── BUTTONS — Premium System ── */
 .btn {
   display: flex;
   align-items: center;
   justify-content: center;
   gap: 8px;
   width: 100%;
-  padding: 12px 16px;
+  padding: 13px 16px;
   border-radius: var(--radius-md);
   font-size: 14px;
-  font-weight: 600;
+  font-weight: 700;
   border: none;
   cursor: pointer;
-  transition: all 0.2s ease;
+  transition: all var(--transition-base);
+  letter-spacing: 0.1px;
+  position: relative;
+  overflow: hidden;
 }
+
+/* Ripple effect on button press */
+.btn::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: rgba(255,255,255,0);
+  transition: background var(--transition-fast);
+}
+.btn:active::after { background: rgba(255,255,255,0.15); }
 
 .btn-primary {
-  background-color: var(--color-primary);
+  background: var(--gradient-primary);
   color: #ffffff;
+  box-shadow: 0 4px 12px rgba(3, 105, 161, 0.30);
 }
-
 .btn-primary:active {
-  background-color: var(--color-primary-dark);
-  transform: scale(0.98);
+  transform: scale(0.97);
+  box-shadow: 0 2px 6px rgba(3, 105, 161, 0.20);
 }
 
 .btn-secondary {
-  background-color: var(--color-primary-light);
-  color: var(--color-primary);
+  background: var(--cawaco-primary-subtle);
+  color: var(--cawaco-primary);
+  border: 1px solid rgba(3, 105, 161, 0.15);
 }
+.btn-secondary:active { transform: scale(0.97); }
 
 .btn-outline {
   background: transparent;
-  border: 1px solid var(--color-border);
+  border: 1.5px solid var(--color-border-strong);
   color: var(--color-text-main);
 }
+.btn-outline:active { transform: scale(0.97); background: var(--color-bg); }
 
 .btn-oa {
-  background-color: #0068FF;
+  background: linear-gradient(135deg, #0068FF 0%, #0052CC 100%);
   color: #ffffff;
+  box-shadow: 0 4px 12px rgba(0, 104, 255, 0.28);
+}
+.btn-oa:active {
+  transform: scale(0.97);
+  box-shadow: 0 2px 6px rgba(0, 104, 255, 0.18);
 }
 
-.btn-oa:active {
-  background-color: #0052CC;
-  transform: scale(0.98);
+.btn-sand {
+  background: var(--gradient-sand);
+  color: #ffffff;
+  box-shadow: 0 4px 12px rgba(196, 149, 42, 0.28);
 }
+.btn-sand:active { transform: scale(0.97); }
+
+.btn-success {
+  background: var(--gradient-success);
+  color: #ffffff;
+  box-shadow: 0 4px 12px rgba(30, 142, 90, 0.28);
+}
+.btn-success:active { transform: scale(0.97); }
 
 /* Bento Quick Actions */
 .section-title {
@@ -547,7 +660,7 @@ body {
   text-decoration: underline;
 }
 
-/* Bento Quick Actions — premium sizing */
+/* ── BENTO GRID — Premium Utility Cards ── */
 .bento-grid {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
@@ -556,8 +669,8 @@ body {
 }
 
 .bento-item {
-  background: var(--color-surface);
-  border: 1px solid var(--color-border-subtle);
+  background: #FFFFFF;
+  border: 1px solid rgba(226, 232, 240, 0.8);
   border-radius: var(--radius-lg);
   padding: 16px 8px 14px;
   display: flex;
@@ -566,20 +679,26 @@ body {
   text-align: center;
   gap: 9px;
   cursor: pointer;
-  transition: all 0.18s ease;
-  box-shadow: 0 2px 8px rgba(0, 59, 111, 0.05);
+  transition: all var(--transition-base);
+  box-shadow: 0 2px 8px rgba(3, 105, 161, 0.05), 0 1px 2px rgba(0,0,0,0.03);
+  position: relative;
+  overflow: hidden;
 }
 
-.bento-item:hover {
-  box-shadow: 0 4px 14px rgba(0, 59, 111, 0.10);
-  transform: translateY(-1px);
+.bento-item::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(135deg, rgba(3,105,161,0.03) 0%, transparent 60%);
+  pointer-events: none;
 }
 
 .bento-item:active {
-  transform: scale(0.95);
-  background-color: var(--cawaco-primary-subtle);
+  transform: scale(0.93);
+  box-shadow: 0 1px 4px rgba(3, 105, 161, 0.08);
 }
 
+/* Premium bento icon — gradient fill + colored shadow */
 .bento-icon {
   width: 50px;
   height: 50px;
@@ -588,23 +707,26 @@ body {
   align-items: center;
   justify-content: center;
   flex-shrink: 0;
+  transition: transform var(--transition-bounce);
 }
+.bento-item:active .bento-icon { transform: scale(0.88); }
 
-/* Category icon colors — CAWACO brand spectrum */
-.icon-blue   { background: #DBEAFE; color: #1D4ED8; }
-.icon-cyan   { background: #CFFAFE; color: #0E7490; }
-.icon-amber  { background: #FEF3C7; color: #B45309; }
-.icon-green  { background: #DCFCE7; color: #15803D; }
-.icon-purple { background: #F3E8FF; color: #7E22CE; }
-.icon-red    { background: #FEE2E2; color: #B91C1C; }
-.icon-indigo { background: #E0E7FF; color: #4338CA; }
-.icon-teal   { background: var(--cawaco-teal-subtle); color: var(--cawaco-teal); }
+/* Gradient Icon Colors — CAWACO brand spectrum */
+.icon-blue   { background: var(--gradient-card-blue); color: #1D4ED8; box-shadow: 0 3px 8px rgba(29,78,216,0.18); }
+.icon-cyan   { background: linear-gradient(135deg,#CFFAFE,#A5F3FC); color: #0E7490; box-shadow: 0 3px 8px rgba(14,116,144,0.18); }
+.icon-amber  { background: var(--gradient-card-orange); color: #B45309; box-shadow: 0 3px 8px rgba(180,83,9,0.18); }
+.icon-green  { background: var(--gradient-card-green); color: #15803D; box-shadow: 0 3px 8px rgba(21,128,61,0.18); }
+.icon-purple { background: var(--gradient-card-purple); color: #7E22CE; box-shadow: 0 3px 8px rgba(126,34,206,0.18); }
+.icon-red    { background: var(--gradient-card-rose); color: #B91C1C; box-shadow: 0 3px 8px rgba(185,28,28,0.18); }
+.icon-indigo { background: linear-gradient(135deg,#E0E7FF,#C7D2FE); color: #4338CA; box-shadow: 0 3px 8px rgba(67,56,202,0.18); }
+.icon-teal   { background: var(--gradient-card-blue); color: var(--cawaco-primary); box-shadow: var(--svc-shadow-blue); }
 
 .bento-label {
-  font-size: 12px;
+  font-size: 11.5px;
   font-weight: 700;
   color: var(--color-text-body);
   line-height: 1.25;
+  letter-spacing: -0.1px;
 }
 
 /* Auto-play Image Slider / Carousel */
@@ -1433,20 +1555,49 @@ a.nav-item:active {
  * HOME PAGE REDESIGN — theo mockup thiết kế CAWACO
  * ============================================================ */
 
-/* ---- HOME HERO SECTION ---- */
+/* ── HOME HERO SECTION — Animated Mesh Gradient ── */
 .home-hero {
   background:
-    radial-gradient(ellipse at 85% 15%, rgba(56, 189, 248, 0.20) 0%, transparent 48%),
-    radial-gradient(ellipse at 10% 75%, rgba(14, 165, 233, 0.12) 0%, transparent 55%),
+    radial-gradient(ellipse at 85% 10%, rgba(56, 189, 248, 0.28) 0%, transparent 48%),
+    radial-gradient(ellipse at 10% 70%, rgba(34, 211, 238, 0.18) 0%, transparent 52%),
+    radial-gradient(ellipse at 55% 90%, rgba(14, 165, 233, 0.12) 0%, transparent 45%),
     linear-gradient(
       168deg,
-      hsl(210, 80%, 32%) 0%,
-      hsl(213, 85%, 24%) 50%,
-      hsl(215, 90%, 17%) 100%
+      hsl(210, 80%, 30%) 0%,
+      hsl(213, 88%, 22%) 50%,
+      hsl(215, 92%, 15%) 100%
     );
   padding: max(52px, calc(16px + var(--safe-top, 38px))) 18px 52px;
   position: relative;
   overflow: hidden;
+}
+
+/* Floating decorative bubbles */
+.home-hero::before {
+  content: '';
+  position: absolute;
+  top: -30px;
+  right: -30px;
+  width: 200px;
+  height: 200px;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(56, 189, 248, 0.22) 0%, rgba(255,255,255,0.05) 60%, transparent 80%);
+  animation: float-bubble 7s ease-in-out infinite;
+  pointer-events: none;
+  z-index: 1;
+}
+.home-hero::after {
+  content: '';
+  position: absolute;
+  bottom: 20px;
+  left: -20px;
+  width: 140px;
+  height: 140px;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(34, 211, 238, 0.18) 0%, transparent 70%);
+  animation: float-bubble-2 9s ease-in-out infinite 2s;
+  pointer-events: none;
+  z-index: 1;
 }
 
 .home-hero-logo-row {
@@ -1458,151 +1609,219 @@ a.nav-item:active {
   z-index: 2;
 }
 
+/* Logo ring — animated conic gradient border */
+.home-hero-logo-wrap {
+  width: 46px;
+  height: 46px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.16);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  box-shadow: 0 0 0 2px rgba(255,255,255,0.45), 0 0 16px rgba(56, 189, 248, 0.40);
+  animation: pulse-ring 3s ease-out infinite 1s;
+}
+
 .home-hero-logo {
   width: 38px;
   height: 38px;
   border-radius: 50%;
-  border: 2px solid rgba(255, 255, 255, 0.85);
+  border: 2px solid rgba(255, 255, 255, 0.9);
   object-fit: cover;
   flex-shrink: 0;
 }
 
 .home-hero-company {
-  font-size: 27px;
+  font-family: var(--font-family-display);
+  font-size: 26px;
   font-weight: 900;
   color: #ffffff;
   line-height: 1.15;
   text-transform: uppercase;
-  letter-spacing: 0.4px;
-  margin: 0 0 10px;
+  letter-spacing: 0.5px;
+  margin: 0 0 8px;
   position: relative;
   z-index: 2;
+  text-shadow: 0 2px 12px rgba(0, 0, 0, 0.20);
 }
 
 .home-hero-sub {
-  font-size: 12px;
-  color: rgba(255, 255, 255, 0.75);
-  font-weight: 500;
-  letter-spacing: 2px;
+  font-size: 11px;
+  color: rgba(255, 255, 255, 0.70);
+  font-weight: 600;
+  letter-spacing: 2.5px;
   text-transform: uppercase;
   margin: 0;
   position: relative;
   z-index: 2;
 }
 
-/* ---- HOME CONTENT WRAPPER ---- */
-/* Bắt đầu ngay sau hero, chứa greeting card overlap */
+/* ── HOME CONTENT WRAPPER ── */
 .home-content {
   padding: 0 16px 16px;
   background: var(--color-bg-app);
 }
 
-/* ---- GREETING CARD (overlap hero) ---- */
+/* ── GREETING CARD (overlap hero) ── */
 .greeting-card {
   background: #ffffff;
-  border-radius: 14px;
-  padding: 13px 14px 13px 18px;
+  border-radius: 18px;
+  padding: 14px 16px 14px 18px;
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: 12px;
-  box-shadow: 0 6px 24px rgba(0, 0, 0, 0.13);
-  margin-top: -32px; /* Overlap hero bottom */
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.15), 0 2px 8px rgba(3, 105, 161, 0.10);
+  margin-top: -32px;
   margin-bottom: 22px;
   position: relative;
   z-index: 2;
+  border: 1px solid rgba(255, 255, 255, 0.9);
+  animation: fade-in-scale 0.35s cubic-bezier(0.22, 1, 0.36, 1) 0.1s both;
 }
 
 .greeting-hello {
-  font-size: 12px;
+  font-size: 11.5px;
   color: var(--color-text-muted);
   margin-bottom: 2px;
+  font-weight: 500;
 }
 
 .greeting-username {
   font-size: 16px;
   font-weight: 800;
   color: var(--color-text-main);
+  letter-spacing: -0.2px;
 }
 
-/* Nút Tài khoản — dark teal theo mockup */
+/* Nút Tài khoản — gradient Ocean Blue */
 .btn-account-teal {
-  background: hsl(213, 88%, 24%);
+  background: var(--gradient-primary);
   color: #ffffff;
   border: none;
-  border-radius: 10px;
+  border-radius: 12px;
   padding: 10px 18px;
   font-size: 13px;
   font-weight: 700;
   cursor: pointer;
   white-space: nowrap;
   flex-shrink: 0;
-  transition: background 0.15s;
-  box-shadow: 0 2px 8px rgba(3, 105, 161, 0.25);
+  transition: all var(--transition-fast);
+  box-shadow: 0 4px 12px rgba(3, 105, 161, 0.28);
+  letter-spacing: 0.1px;
 }
-
 .btn-account-teal:active {
-  background: hsl(213, 90%, 18%);
+  transform: scale(0.94);
+  box-shadow: 0 2px 6px rgba(3, 105, 161, 0.18);
 }
 
-/* ---- SECTION LABELS ---- */
+/* ── SECTION LABELS ── */
 .home-section-label {
-  font-size: 11px;
-  font-weight: 700;
+  font-size: 10.5px;
+  font-weight: 800;
   color: var(--color-text-muted);
   text-transform: uppercase;
-  letter-spacing: 1px;
+  letter-spacing: 1.2px;
   margin: 0 0 12px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.home-section-label::before {
+  content: '';
+  display: block;
+  width: 3px;
+  height: 12px;
+  border-radius: 2px;
+  background: var(--gradient-primary);
+  flex-shrink: 0;
 }
 
-/* ---- DỊCH VỤ — Service Circle Row ---- */
+/* ── DỊCH VỤ — Service Grid (2x2 or 4-row) ── */
 .service-row {
-  display: flex;
-  justify-content: space-around;
-  margin-bottom: 24px;
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 8px;
+  margin-bottom: 20px;
 }
 
 .svc-item {
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 9px;
+  gap: 8px;
   cursor: pointer;
-  background: none;
-  border: none;
-  padding: 0;
-  flex: 1;
+  background: #FFFFFF;
+  border: 1px solid rgba(226, 232, 240, 0.8);
+  border-radius: 16px;
+  padding: 14px 6px 12px;
+  transition: all var(--transition-base);
+  box-shadow: 0 2px 8px rgba(3, 105, 161, 0.05);
+  position: relative;
+  overflow: hidden;
+}
+.svc-item::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(135deg, rgba(3,105,161,0.03) 0%, transparent 70%);
+  pointer-events: none;
+}
+.svc-item:active {
+  transform: scale(0.90);
+  box-shadow: 0 1px 4px rgba(3,105,161,0.08);
 }
 
+/* Gradient icon circles với colored shadow */
 .svc-circle {
-  width: 62px;
-  height: 62px;
+  width: 48px;
+  height: 48px;
   border-radius: 50%;
   display: flex;
   align-items: center;
   justify-content: center;
-  transition: transform 0.15s;
+  transition: transform var(--transition-bounce);
 }
+.svc-item:active .svc-circle { transform: scale(0.88); }
 
-.svc-circle:active {
-  transform: scale(0.90);
+/* Gradient icon fills — Ocean Blue premium */
+.svc-orange {
+  background: var(--svc-gradient-orange);
+  color: #ffffff;
+  box-shadow: var(--svc-shadow-orange);
 }
-
-/* Màu icon circles theo mockup */
-.svc-orange { background: #FEF3C7; color: #B45309; }  /* Hóa đơn — amber */
-.svc-blue   { background: #DBEAFE; color: #1D4ED8; }  /* Bốc số — ocean blue */
-.svc-slate  { background: #E0F2FE; color: #0369A1; }  /* Báo sự cố — sapphire */
+.svc-blue {
+  background: var(--svc-gradient-blue);
+  color: #ffffff;
+  box-shadow: var(--svc-shadow-blue);
+}
+.svc-slate {
+  background: linear-gradient(135deg, #D9383A 0%, #F43F5E 100%);
+  color: #ffffff;
+  box-shadow: 0 4px 12px rgba(217, 56, 58, 0.30);
+}
+.svc-green {
+  background: var(--svc-gradient-green);
+  color: #ffffff;
+  box-shadow: var(--svc-shadow-green);
+}
+.svc-purple {
+  background: var(--svc-gradient-purple);
+  color: #ffffff;
+  box-shadow: var(--svc-shadow-purple);
+}
 
 .svc-label {
-  font-size: 12px;
+  font-size: 11px;
   font-weight: 700;
   color: var(--color-text-body);
   text-align: center;
-  max-width: 68px;
-  line-height: 1.3;
+  line-height: 1.25;
+  letter-spacing: -0.1px;
 }
 
-/* ---- TIỆN ÍCH / THÔNG TIN — 3-col grid ---- */
+/* ── TIỆN ÍCH / THÔNG TIN — 3-col grid (premium) ── */
 .home-grid-3 {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
@@ -1610,8 +1829,8 @@ a.nav-item:active {
 }
 
 .home-grid-item {
-  background: #ffffff;
-  border-radius: 12px;
+  background: #FFFFFF;
+  border-radius: 14px;
   padding: 14px 8px 12px;
   display: flex;
   flex-direction: column;
@@ -1619,42 +1838,53 @@ a.nav-item:active {
   gap: 8px;
   text-align: center;
   cursor: pointer;
-  border: 1px solid var(--color-border-subtle);
-  transition: all 0.15s;
-  /* Reset button styles */
+  border: 1px solid rgba(226, 232, 240, 0.7);
+  transition: all var(--transition-base);
   font-family: inherit;
   font-size: inherit;
+  box-shadow: 0 2px 8px rgba(3, 105, 161, 0.04);
+  position: relative;
+  overflow: hidden;
 }
-
+.home-grid-item::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(135deg, rgba(3,105,161,0.02) 0%, transparent 60%);
+  pointer-events: none;
+}
 .home-grid-item:active {
-  transform: scale(0.93);
-  background: #f0f4f8;
+  transform: scale(0.91);
+  box-shadow: 0 1px 4px rgba(3,105,161,0.06);
 }
 
 .grid-icon-wrap {
   width: 40px;
   height: 40px;
-  border-radius: 10px;
+  border-radius: 11px;
   display: flex;
   align-items: center;
   justify-content: center;
   flex-shrink: 0;
+  transition: transform var(--transition-bounce);
 }
+.home-grid-item:active .grid-icon-wrap { transform: scale(0.88); }
 
-/* Icon bg colors cho grid */
-.gi-teal   { background: #E0F2FE; color: #0369A1; }  /* ocean blue */
-.gi-amber  { background: #FEF3C7; color: #B45309; }  /* amber */
-.gi-slate  { background: #F0F9FF; color: #0284C7; }  /* sky blue */
-.gi-blue   { background: #DBEAFE; color: #1D4ED8; }  /* indigo */
-.gi-purple { background: #F3E8FF; color: #7E22CE; }  /* purple */
-.gi-green  { background: #DCFCE7; color: #15803D; }  /* green */
-.gi-peach  { background: #FFF7ED; color: #C2410C; }  /* orange */
+/* Gradient icon bg colors */
+.gi-teal   { background: linear-gradient(135deg,#E0F2FE,#BAE6FD); color: #0369A1; box-shadow: 0 2px 6px rgba(3,105,161,0.18); }
+.gi-amber  { background: linear-gradient(135deg,#FEF3C7,#FDE68A); color: #B45309; box-shadow: 0 2px 6px rgba(180,83,9,0.18); }
+.gi-slate  { background: linear-gradient(135deg,#F0F9FF,#BFDBFE); color: #0284C7; box-shadow: 0 2px 6px rgba(2,132,199,0.18); }
+.gi-blue   { background: linear-gradient(135deg,#DBEAFE,#C7D2FE); color: #1D4ED8; box-shadow: 0 2px 6px rgba(29,78,216,0.18); }
+.gi-purple { background: linear-gradient(135deg,#F3E8FF,#E9D5FF); color: #7E22CE; box-shadow: 0 2px 6px rgba(126,34,206,0.18); }
+.gi-green  { background: linear-gradient(135deg,#DCFCE7,#BBF7D0); color: #15803D; box-shadow: 0 2px 6px rgba(21,128,61,0.18); }
+.gi-peach  { background: linear-gradient(135deg,#FFF7ED,#FDDCAB); color: #C2410C; box-shadow: 0 2px 6px rgba(194,65,12,0.18); }
 
 .grid-item-label {
   font-size: 11px;
-  font-weight: 600;
+  font-weight: 700;
   color: var(--color-text-body);
-  line-height: 1.3;
+  line-height: 1.25;
+  letter-spacing: -0.1px;
 }
 
 /* ---- KÊNH CHÍNH THỨC — Zalo OA Card ---- */
@@ -2049,12 +2279,23 @@ a.nav-item:active {
   color: var(--color-text-muted);
 }
 
-/* ---- BOTTOM NAV FIX — active màu Ocean Blue ---- */
+/* ── BOTTOM NAV — Frosted Glass Premium ── */
 .nav-item.active,
 .nav-tab.active {
   color: var(--cawaco-primary);
-  font-weight: 700;
-  border-top-color: var(--cawaco-primary);
+  font-weight: 800;
+  border-top-color: transparent;
+}
+
+/* Frosted glass bottom nav override */
+[class*="bottom-nav"],
+.bottom-navigation,
+.zaui-navigation {
+  background: rgba(255, 255, 255, 0.88) !important;
+  backdrop-filter: blur(20px) saturate(1.5) !important;
+  -webkit-backdrop-filter: blur(20px) saturate(1.5) !important;
+  border-top: 1px solid rgba(226, 232, 240, 0.6) !important;
+  box-shadow: 0 -4px 20px rgba(3, 105, 161, 0.08) !important;
 }
 
 /* ============================================================
