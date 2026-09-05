@@ -482,7 +482,7 @@ export class ZaloMessagingService {
   }): Promise<ZaloBroadcastLogDto> {
     await this.ensureInitialized();
 
-    // Tinh so luong khach hang that theo dia ban tu CSDL Customer
+    // 1. Tinh so luong khach hang that theo dia ban tu CSDL Customer
     let estimatedCount = params.recipientCount;
     if (!estimatedCount) {
       const matchAreaCount = await prisma.customer.count({
@@ -512,6 +512,73 @@ export class ZaloMessagingService {
         sentBy: params.sentBy || 'Ban Quản trị CAWACO',
       },
     });
+
+    // 2. Gui tin nhan thuc te qua Zalo OA den tat ca khach hang dang co hoi thoai
+    const prefixTitle = params.type === 'OUTAGE_ALERT'
+      ? '[CẢNH BÁO CÚP NƯỚC KHẨN CẤP]'
+      : params.type === 'MAINTENANCE'
+      ? '[THÔNG BÁO BẢO TRÌ TUYẾN ỐNG]'
+      : params.type === 'BILLING_REMINDER'
+      ? '[NHẮC HẠN THANH TOÁN TIỀN NƯỚC]'
+      : '[THÔNG BÁO TỪ CẤP NƯỚC CÀ MAU]';
+
+    const fullMessage = `${prefixTitle}\n${params.title}\n\nKhu vực: ${params.targetArea}\n\nNội dung: ${params.content}\n\nTrân trọng thông báo đến Quý khách hàng.`;
+
+    try {
+      const conversations = await prisma.zaloConversation.findMany();
+      for (const conv of conversations) {
+        // Goi API Zalo OA that neu co zaloUserId
+        if (conv.zaloUserId) {
+          zaloOAClient.sendTextMessage(conv.zaloUserId, fullMessage).catch((e) => {
+            console.warn(`[ZaloMessagingService] Loi gui broadcast toi ${conv.zaloUserId}:`, e.message);
+          });
+        }
+
+        // Luu lich su tin nhan vao cuoc hoi thoai de CSKH & nguoi dan theo doi
+        await prisma.zaloMessage.create({
+          data: {
+            conversationId: conv.id,
+            sender: 'OA_STAFF',
+            senderName: params.sentBy || 'Ban Quản trị CAWACO',
+            senderAvatar: '/brand/logo.jpg',
+            content: fullMessage,
+            type: 'SYSTEM_ALERT',
+            status: 'DELIVERED',
+          },
+        });
+
+        // Cap nhat lastMessage cua hoi thoai
+        await prisma.zaloConversation.update({
+          where: { id: conv.id },
+          data: {
+            lastMessage: `[Thông báo] ${params.title}`,
+            lastMessageAt: new Date(),
+          },
+        });
+      }
+    } catch (err: any) {
+      console.warn('[ZaloMessagingService] Loi dong bo broadcast vao hoi thoai:', err.message);
+    }
+
+    // 3. Dong bo tao ban tin canh bao tren he thong (Mini App & Web Portal)
+    try {
+      const slug = `thong-bao-${Date.now()}`;
+      await prisma.news.create({
+        data: {
+          title: params.title,
+          slug,
+          summary: params.content.length > 150 ? `${params.content.slice(0, 150)}...` : params.content,
+          content: params.content,
+          category: params.type === 'BILLING_REMINDER' ? 'ANNOUNCEMENT' : 'MAINTENANCE_OUTAGE',
+          isOutageAlert: params.type === 'OUTAGE_ALERT' || params.type === 'MAINTENANCE',
+          affectedArea: params.targetArea,
+          isPublished: true,
+          publishedAt: new Date(),
+        },
+      });
+    } catch (err: any) {
+      console.warn('[ZaloMessagingService] Khong the tao News tu broadcast:', err.message);
+    }
 
     return {
       id: record.id,

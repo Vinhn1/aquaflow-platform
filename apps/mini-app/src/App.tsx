@@ -122,7 +122,6 @@ export const App: React.FC = () => {
         openChat({
           type: 'oa',
           id: ZALO_CONFIG.OA_ID,
-          message: 'Xin chào Tổng đài CSKH CAWACO Cà Mau, tôi cần hỗ trợ dịch vụ nước sạch.',
         }).catch((err) => {
           console.warn('[Zalo SDK] openChat fallback trong Zalo:', err);
           window.location.href = ZALO_CONFIG.OA_URL;

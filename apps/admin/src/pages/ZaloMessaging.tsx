@@ -276,7 +276,7 @@ export const ZaloMessaging: React.FC = () => {
   const handleSendBroadcast = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!bcTitle.trim() || !bcContent.trim()) {
-      toast.error('Vui lòng nhập đầy đủ tiêu đề và nội dung thông báo!');
+      toast.error('Vui lòng nhập đầy đủ tiêu đề và nội dung! Bạn có thể bấm chọn Mẫu Soạn Nhanh ở trên.');
       return;
     }
 
@@ -286,24 +286,29 @@ export const ZaloMessaging: React.FC = () => {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          title: bcTitle,
+          title: bcTitle.trim(),
           type: bcType,
           targetArea: bcArea,
-          content: bcContent,
-          sentBy: user?.fullName || 'Ban Giám đốc CAWACO',
+          content: bcContent.trim(),
+          sentBy: user?.fullName ? `CSKH ${user.fullName}` : 'Ban Quản trị CAWACO',
         }),
       });
 
-      if (res.ok) {
-        const json = await res.json();
-        toast.success(`Đã phát lệnh phát sóng Zalo ZNS thành công tới ${json.data.recipientCount} khách hàng!`);
+      const json = await res.json().catch(() => ({}));
+
+      if (res.ok && json.success) {
+        toast.success(`Đã phát lệnh phát sóng Zalo ZNS thành công tới ${json.data?.recipientCount || 0} khách hàng!`);
         setBcTitle('');
         setBcContent('');
-        fetchBroadcasts();
-        fetchStats();
+        await fetchBroadcasts();
+        await fetchStats();
+        // Chuyển sang tab Lịch sử phát sóng để người dùng thấy ngay kết quả
+        setActiveTab('STATS');
+      } else {
+        toast.error(json.message || 'Gửi thông báo thất bại. Vui lòng thử lại!');
       }
-    } catch {
-      toast.error('Lỗi khi phát lệnh thông báo');
+    } catch (err: any) {
+      toast.error(err.message || 'Lỗi khi phát lệnh thông báo');
     } finally {
       setIsBroadcasting(false);
     }
@@ -654,6 +659,43 @@ export const ZaloMessaging: React.FC = () => {
                 <p className="text-xs text-slate-500 mt-0.5">
                   Phát thông báo cúp nước khẩn cấp, bảo trì hoặc nhắc hạn thanh toán theo địa bàn
                 </p>
+                {/* Mau soan nhanh */}
+                <div className="mt-3 flex flex-wrap gap-1.5 items-center">
+                  <span className="text-[11px] font-semibold text-slate-500">Mẫu nhanh:</span>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setBcType('OUTAGE_ALERT');
+                      setBcTitle('Tạm ngưng cấp nước súc xả tuyến ống D300');
+                      setBcContent('CAWACO trân trọng thông báo: Tạm ngưng cấp nước từ 22h00 đến 04h00 ngày mai để súc xả và bảo dưỡng mạng lưới đường ống. Kính mong Quý khách chủ động trữ nước sinh hoạt.');
+                    }}
+                    className="px-2.5 py-1 text-[11px] font-medium bg-red-50 hover:bg-red-100 text-red-700 rounded-lg border border-red-200 transition"
+                  >
+                    Mẫu Cúp Nước
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setBcType('MAINTENANCE');
+                      setBcTitle('Bảo dưỡng định kỳ tổ máy bơm tăng áp');
+                      setBcContent('CAWACO tiến hành bảo trì tổ máy bơm tăng áp, áp lực nước có thể yếu cục bộ từ 13h30 đến 16h30. Kính mong Quý khách hàng thông cảm cho sự bất tiện này.');
+                    }}
+                    className="px-2.5 py-1 text-[11px] font-medium bg-amber-50 hover:bg-amber-100 text-amber-700 rounded-lg border border-amber-200 transition"
+                  >
+                    Mẫu Bảo Trì
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setBcType('BILLING_REMINDER');
+                      setBcTitle('Thông báo nhắc hạn thanh toán hóa đơn tiền nước');
+                      setBcContent('Hóa đơn tiền nước kỳ này của Quý khách đã được phát hành. Kính mời Quý khách mở Mini App Cấp Nước Cà Mau để tra cứu chỉ số và thanh toán trực tuyến qua VietQR.');
+                    }}
+                    className="px-2.5 py-1 text-[11px] font-medium bg-blue-50 hover:bg-blue-100 text-blue-700 rounded-lg border border-blue-200 transition"
+                  >
+                    Mẫu Tiền Nước
+                  </button>
+                </div>
               </div>
 
               <form onSubmit={handleSendBroadcast} className="space-y-4">
