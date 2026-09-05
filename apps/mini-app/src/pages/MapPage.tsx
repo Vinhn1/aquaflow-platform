@@ -9,6 +9,7 @@
  */
 
 import React, { useEffect, useRef, useState } from 'react';
+import { openPhone, openOutApp } from 'zmp-sdk/apis';
 import L from 'leaflet';
 
 // Sửa lỗi icon Leaflet bị mất khi dùng Vite bundler
@@ -234,6 +235,34 @@ export const MapPage: React.FC = () => {
       mapInstanceRef.current = null;
     };
   }, []);
+
+  /** Xu ly goi dien thoai qua Zalo Mini App SDK */
+  const handleCall = async (phone: string) => {
+    const cleanPhone = phone.replace(/[^0-9+]/g, '');
+    try {
+      if (typeof openPhone === 'function') {
+        await openPhone({ phoneNumber: cleanPhone });
+        return;
+      }
+    } catch (err) {
+      console.warn('[MapPage] openPhone error, fallback to tel:', err);
+    }
+    window.location.href = `tel:${cleanPhone}`;
+  };
+
+  /** Xu ly mo ban do chi duong qua Zalo Mini App SDK */
+  const handleDirections = async (lat: number, lng: number) => {
+    const mapUrl = `https://www.google.com/maps/dir/?api=1&destination=${lat},${lng}`;
+    try {
+      if (typeof openOutApp === 'function') {
+        await openOutApp({ url: mapUrl });
+        return;
+      }
+    } catch (err) {
+      console.warn('[MapPage] openOutApp error, fallback to browser open:', err);
+    }
+    window.open(mapUrl, '_blank') || (window.location.href = mapUrl);
+  };
 
   /** Lấy vị trí GPS của người dùng */
   const handleGetUserLocation = () => {
@@ -656,35 +685,69 @@ export const MapPage: React.FC = () => {
               <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--color-success)" strokeWidth="2" style={{ flexShrink: 0 }}>
                 <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07A19.5 19.5 0 0 1 4.11 4.11a19.79 19.79 0 0 1 3.07-8.67A2 2 0 0 1 9.36 2h3a2 2 0 0 1 2 1.72c.127.96.361 1.903.7 2.81a2 2 0 0 1-.45 2.11L13.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z" />
               </svg>
-              <a href={`tel:${selectedLocation.phone}`} style={{ fontSize: '13px', color: 'var(--cawaco-primary)', fontWeight: '600', textDecoration: 'none' }}>
+              <button
+                type="button"
+                onClick={() => handleCall(selectedLocation.phone)}
+                style={{
+                  background: 'none',
+                  border: 'none',
+                  padding: 0,
+                  fontSize: '13px',
+                  color: 'var(--cawaco-primary)',
+                  fontWeight: '600',
+                  textDecoration: 'none',
+                  cursor: 'pointer',
+                  textAlign: 'left',
+                }}
+              >
                 {selectedLocation.phone.replace(/(\d{4})(\d{3})(\d{4})/, '($1) $2 $3')}
-              </a>
+              </button>
             </div>
 
             {/* Nút hành động */}
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px' }}>
-              <a
-                href={`tel:${selectedLocation.phone}`}
+              <button
+                type="button"
+                onClick={() => handleCall(selectedLocation.phone)}
                 className="btn btn-primary"
-                style={{ textDecoration: 'none', fontSize: '13px' }}
+                style={{
+                  fontSize: '13px',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  gap: '6px',
+                  border: 'none',
+                  cursor: 'pointer',
+                  borderRadius: '8px',
+                  padding: '10px 12px',
+                }}
               >
                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                   <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07A19.5 19.5 0 0 1 4.11 4.11a19.79 19.79 0 0 1 3.07-8.67A2 2 0 0 1 9.36 2h3a2 2 0 0 1 2 1.72c.127.96.361 1.903.7 2.81a2 2 0 0 1-.45 2.11L13.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z" />
                 </svg>
                 Gọi ngay
-              </a>
-              <a
-                href={`https://www.google.com/maps/dir/?api=1&destination=${selectedLocation.lat},${selectedLocation.lng}`}
-                target="_blank"
-                rel="noopener noreferrer"
+              </button>
+              <button
+                type="button"
+                onClick={() => handleDirections(selectedLocation.lat, selectedLocation.lng)}
                 className="btn btn-secondary"
-                style={{ textDecoration: 'none', fontSize: '13px' }}
+                style={{
+                  fontSize: '13px',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  gap: '6px',
+                  border: 'none',
+                  cursor: 'pointer',
+                  borderRadius: '8px',
+                  padding: '10px 12px',
+                }}
               >
                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                   <polygon points="3 11 22 2 13 21 11 13 3 11" />
                 </svg>
                 Chỉ đường
-              </a>
+              </button>
             </div>
           </div>
         </div>
@@ -744,7 +807,25 @@ export const MapPage: React.FC = () => {
             </div>
 
             <div style={{ marginTop: '12px', fontSize: '11px', color: '#64748B', lineHeight: 1.45 }}>
-              Đội kỹ thuật CAWACO đang tích cực thi công để khôi phục áp lực nước sớm nhất. Quý khách cần hỗ trợ gấp vui lòng liên hệ Tổng đài <strong>0290 3836360</strong>.
+              Đội kỹ thuật CAWACO đang tích cực thi công để khôi phục áp lực nước sớm nhất. Quý khách cần hỗ trợ gấp vui lòng liên hệ Tổng đài{' '}
+              <button
+                type="button"
+                onClick={() => handleCall('02903836360')}
+                style={{
+                  background: 'none',
+                  border: 'none',
+                  padding: 0,
+                  color: 'var(--cawaco-primary)',
+                  fontWeight: 700,
+                  textDecoration: 'underline',
+                  cursor: 'pointer',
+                  fontSize: 'inherit',
+                  fontFamily: 'inherit',
+                  display: 'inline',
+                }}
+              >
+                0290 3836360
+              </button>.
             </div>
           </div>
         </div>
