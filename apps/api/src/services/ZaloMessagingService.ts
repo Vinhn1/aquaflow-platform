@@ -109,7 +109,7 @@ export class ZaloMessagingService {
         where: { id: conversationId },
       });
 
-      if (!conv || !conv.zaloUserId || conv.zaloUserId.startsWith('zalo_user_real_')) {
+      if (!conv || !conv.zaloUserId) {
         return false;
       }
 
@@ -120,6 +120,7 @@ export class ZaloMessagingService {
 
       const sorted = [...messages].sort((a, b) => (Number(a.time) || 0) - (Number(b.time) || 0));
       let hasNew = false;
+      let hasNewCustomerMsg = false;
       let lastMsgText = conv.lastMessage;
       let lastMsgDate = conv.lastMessageAt;
 
@@ -135,9 +136,10 @@ export class ZaloMessagingService {
           where: {
             conversationId: conv.id,
             content,
+            sender: isCustomer ? 'CUSTOMER' : 'OA_STAFF',
             createdAt: {
-              gte: new Date(createdAt.getTime() - 15000),
-              lte: new Date(createdAt.getTime() + 15000),
+              gte: new Date(createdAt.getTime() - 5000),
+              lte: new Date(createdAt.getTime() + 5000),
             },
           },
         });
@@ -156,6 +158,7 @@ export class ZaloMessagingService {
             },
           });
           hasNew = true;
+          if (isCustomer) hasNewCustomerMsg = true;
           lastMsgText = content;
           lastMsgDate = createdAt;
         }
@@ -167,6 +170,7 @@ export class ZaloMessagingService {
           data: {
             lastMessage: lastMsgText,
             lastMessageAt: lastMsgDate,
+            unreadCount: hasNewCustomerMsg ? { increment: 1 } : conv.unreadCount,
           },
         });
       }
@@ -181,15 +185,19 @@ export class ZaloMessagingService {
   /**
    * Đồng bộ toàn bộ hội thoại và tin nhắn thật từ Zalo OA API về PostgreSQL
    */
-  public static async syncWithZaloOA(): Promise<{ synced: number }> {
+  public static async syncWithZaloOA(): Promise<{ synced: number; error?: string }> {
     if (this.isSyncing) {
       return { synced: 0 };
     }
     this.isSyncing = true;
 
     try {
-      if (!zaloOAClient.getStatus().hasAccessToken) {
-        return { synced: 0 };
+      const oaStatus = zaloOAClient.getStatus();
+      if (!oaStatus.configured || !oaStatus.hasAccessToken) {
+        return {
+          synced: 0,
+          error: 'Zalo OA chưa được cấu hình hoặc token đã hết hạn. Vui lòng bấm Cấp lại quyền OA.',
+        };
       }
 
       const recentChats = await zaloOAClient.getRecentChats(0, 10);
@@ -213,8 +221,6 @@ export class ZaloMessagingService {
           where: { zaloUserId: userId },
         });
 
-        let shouldFetchMessages = false;
-
         if (!conv) {
           conv = await prisma.zaloConversation.create({
             data: {
@@ -229,66 +235,59 @@ export class ZaloMessagingService {
               tags: ['Zalo OA Truc Tuyen'],
             },
           });
-          shouldFetchMessages = true;
         } else {
-          const hasMessageChanged = conv.lastMessage !== lastMsg || Math.abs(conv.lastMessageAt.getTime() - msgTime.getTime()) > 3000;
-          if (hasMessageChanged) {
-            shouldFetchMessages = true;
-            await prisma.zaloConversation.update({
-              where: { id: conv.id },
-              data: {
-                customerName: displayName || conv.customerName,
-                avatarUrl: avatar || conv.avatarUrl,
-                lastMessage: lastMsg,
-                lastMessageAt: msgTime,
-                unreadCount: chat.src === 1 ? { increment: 1 } : conv.unreadCount,
+          await prisma.zaloConversation.update({
+            where: { id: conv.id },
+            data: {
+              customerName: displayName || conv.customerName,
+              avatarUrl: avatar || conv.avatarUrl,
+              lastMessage: lastMsg || conv.lastMessage,
+              lastMessageAt: msgTime,
+            },
+          });
+        }
+
+        // Luôn kéo lịch sử tin nhắn chi tiết của người này để không bỏ sót tin nhắn
+        const messages = await zaloOAClient.getConversationMessages(userId, 0, 10);
+        if (messages && messages.length > 0) {
+          const sorted = [...messages].sort((a, b) => (Number(a.time) || 0) - (Number(b.time) || 0));
+          for (const m of sorted) {
+            const isCustomer = m.src === 1;
+            const content = m.message || '';
+            if (!content) continue;
+
+            const mRawTime = Number(m.time);
+            const createdAt = m.time ? new Date(mRawTime > 1e11 ? mRawTime : mRawTime * 1000) : new Date();
+
+            const exists = await prisma.zaloMessage.findFirst({
+              where: {
+                conversationId: conv.id,
+                content,
+                sender: isCustomer ? 'CUSTOMER' : 'OA_STAFF',
+                createdAt: {
+                  gte: new Date(createdAt.getTime() - 5000),
+                  lte: new Date(createdAt.getTime() + 5000),
+                },
               },
             });
-          }
-        }
 
-        // Kéo lịch sử tin nhắn chi tiết nếu có tin mới hoặc hội thoại mới
-        if (shouldFetchMessages) {
-          const messages = await zaloOAClient.getConversationMessages(userId, 0, 10);
-          if (messages && messages.length > 0) {
-            const sorted = [...messages].sort((a, b) => (Number(a.time) || 0) - (Number(b.time) || 0));
-            for (const m of sorted) {
-              const isCustomer = m.src === 1;
-              const content = m.message || '';
-              if (!content) continue;
-
-              const mRawTime = Number(m.time);
-              const createdAt = m.time ? new Date(mRawTime > 1e11 ? mRawTime : mRawTime * 1000) : new Date();
-
-              const exists = await prisma.zaloMessage.findFirst({
-                where: {
+            if (!exists) {
+              await prisma.zaloMessage.create({
+                data: {
                   conversationId: conv.id,
+                  sender: isCustomer ? 'CUSTOMER' : 'OA_STAFF',
+                  senderName: isCustomer ? (m.from_display_name || conv.customerName) : 'CSKH CAWACO',
+                  senderAvatar: isCustomer ? (m.from_avatar || conv.avatarUrl) : '/brand/logo.jpg',
                   content,
-                  createdAt: {
-                    gte: new Date(createdAt.getTime() - 15000),
-                    lte: new Date(createdAt.getTime() + 15000),
-                  },
+                  type: 'TEXT',
+                  status: 'DELIVERED',
+                  createdAt,
                 },
               });
-
-              if (!exists) {
-                await prisma.zaloMessage.create({
-                  data: {
-                    conversationId: conv.id,
-                    sender: isCustomer ? 'CUSTOMER' : 'OA_STAFF',
-                    senderName: isCustomer ? (m.from_display_name || conv.customerName) : 'CSKH CAWACO',
-                    senderAvatar: isCustomer ? (m.from_avatar || conv.avatarUrl) : '/brand/logo.jpg',
-                    content,
-                    type: 'TEXT',
-                    status: 'DELIVERED',
-                    createdAt,
-                  },
-                });
-              }
             }
           }
-          count++;
         }
+        count++;
       }
 
       this.lastGlobalSyncAt = Date.now();

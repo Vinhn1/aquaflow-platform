@@ -197,16 +197,20 @@ export const ZaloMessaging: React.FC = () => {
     try {
       setIsSyncing(true);
       const res = await fetch('/api/v1/zalo/sync', { method: 'POST' });
-      if (res.ok) {
-        const json = await res.json();
+      const json = await res.json();
+      if (res.ok && json.success) {
         toast.success(json.message || 'Đã đồng bộ tin nhắn từ Zalo OA');
         await fetchConversations(true);
         if (selectedConvId) {
           await fetchMessages(selectedConvId);
         }
+        await fetchStats();
+      } else {
+        toast.error(json.message || 'Không thể đồng bộ từ Zalo OA');
+        await fetchStats();
       }
     } catch {
-      toast.error('Lỗi khi đồng bộ từ Zalo OA');
+      toast.error('Lỗi kết nối máy chủ khi đồng bộ Zalo');
     } finally {
       setIsSyncing(false);
     }
@@ -224,10 +228,15 @@ export const ZaloMessaging: React.FC = () => {
 
   // Tự động cập nhật thời gian thực mỗi 2.5 giây
   useEffect(() => {
+    let tick = 0;
     const timer = setInterval(() => {
       fetchConversations(true);
       if (selectedConvId) {
         fetchMessages(selectedConvId);
+      }
+      tick++;
+      if (tick % 4 === 0) {
+        fetchStats();
       }
     }, 2500);
     return () => clearInterval(timer);
@@ -352,6 +361,25 @@ export const ZaloMessaging: React.FC = () => {
                   </svg>
                   {isSyncing ? 'Đang đồng bộ...' : 'Đồng bộ tin Zalo'}
                 </button>
+                <a
+                  href="/api/v1/zalo/auth/url"
+                  onClick={async (e) => {
+                    e.preventDefault();
+                    try {
+                      const res = await fetch('/api/v1/zalo/auth/url');
+                      const json = await res.json();
+                      if (json.data?.authUrl) {
+                        window.open(json.data.authUrl, '_blank');
+                      }
+                    } catch {
+                      toast.error('Không thể lấy liên kết cấp quyền Zalo OA');
+                    }
+                  }}
+                  className="text-xs text-slate-400 hover:text-blue-600 underline ml-1 cursor-pointer"
+                  title="Cấp lại quyền kết nối nếu Access Token Zalo OA bị lỗi hoặc hết hạn"
+                >
+                  Cấp lại quyền OA
+                </a>
               </div>
             ) : (
               <a
@@ -368,11 +396,11 @@ export const ZaloMessaging: React.FC = () => {
                     toast.error('Không thể lấy liên kết cấp quyền Zalo OA');
                   }
                 }}
-                className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-bold bg-blue-50 hover:bg-blue-100 text-blue-700 border border-blue-200 cursor-pointer transition"
+                className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-amber-100 hover:bg-amber-200 text-amber-900 border border-amber-300 cursor-pointer transition"
                 title="Nhấn để mở trang xác thực cấp quyền Zalo"
               >
-                <span className="w-2 h-2 rounded-full bg-blue-500"></span>
-                Zalo OA · Nhấn Cấp Quyền
+                <span className="w-2 h-2 rounded-full bg-amber-500 animate-ping"></span>
+                Zalo OA Cần Cấp Quyền Lại · Nhấn Cấp Quyền
               </a>
             )}
           </div>

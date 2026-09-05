@@ -15,7 +15,9 @@ export function createZaloRouter(): Router {
 
   // GET /api/v1/zalo/auth/url — Lấy URL cấp quyền Zalo OA
   router.get('/auth/url', (req, res) => {
-    const baseUrl = process.env.API_BASE_URL || `${req.protocol}://${req.get('host')}`;
+    const proto = req.get('x-forwarded-proto') || req.protocol;
+    const host = req.get('x-forwarded-host') || req.get('host');
+    const baseUrl = process.env.API_BASE_URL || `${proto}://${host}`;
     const redirectUri = (req.query.redirectUri as string) || `${baseUrl}/api/v1/zalo/auth/callback`;
     const authUrl = zaloOAClient.getAuthorizationUrl(redirectUri);
     return res.json({ success: true, data: { authUrl } });
@@ -47,6 +49,9 @@ export function createZaloRouter(): Router {
   router.post('/sync', async (req, res) => {
     try {
       const result = await ZaloMessagingService.syncWithZaloOA();
+      if (result.error) {
+        return res.status(400).json({ success: false, message: result.error, data: result });
+      }
       return res.json({ success: true, message: `Đã đồng bộ ${result.synced} hội thoại từ Zalo OA`, data: result });
     } catch (error: any) {
       return res.status(500).json({ success: false, message: error.message });

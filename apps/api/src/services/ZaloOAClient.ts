@@ -1,4 +1,6 @@
 import axios from 'axios';
+import fs from 'fs';
+import path from 'path';
 
 export interface ZaloOASendResult {
   success: boolean;
@@ -8,30 +10,79 @@ export interface ZaloOASendResult {
   raw?: any;
 }
 
+const TOKEN_CACHE_FILE = path.resolve(process.cwd(), '.zalo_tokens.json');
+
 export class ZaloOAClient {
   private appId: string;
   private appSecret: string;
   private oaId: string;
-  private accessToken: string | null;
-  private refreshToken: string | null;
-  private tokenExpiresAt: number;
+  private accessToken: string | null = null;
+  private refreshToken: string | null = null;
+  private tokenExpiresAt: number = 0;
+  private tokenExpiredOrInvalid: boolean = false;
 
   constructor() {
     this.appId = process.env.ZALO_APP_ID || '';
     this.appSecret = process.env.ZALO_APP_SECRET || '';
     this.oaId = process.env.ZALO_OA_ID || '';
-    this.accessToken = process.env.ZALO_OA_ACCESS_TOKEN || null;
-    this.refreshToken = process.env.ZALO_OA_REFRESH_TOKEN || null;
-    this.tokenExpiresAt = Number(process.env.ZALO_OA_TOKEN_EXPIRES_AT) || 0;
+    this.loadPersistedTokens();
+  }
+
+  private loadPersistedTokens(): void {
+    try {
+      if (fs.existsSync(TOKEN_CACHE_FILE)) {
+        const raw = fs.readFileSync(TOKEN_CACHE_FILE, 'utf-8');
+        const data = JSON.parse(raw);
+        if (data.accessToken) this.accessToken = data.accessToken;
+        if (data.refreshToken) this.refreshToken = data.refreshToken;
+        if (data.tokenExpiresAt) this.tokenExpiresAt = Number(data.tokenExpiresAt);
+        if (data.tokenExpiredOrInvalid !== undefined) this.tokenExpiredOrInvalid = Boolean(data.tokenExpiredOrInvalid);
+        console.log('[ZaloOAClient] Da tai token tu cache file persistent');
+      }
+    } catch {
+      // Ignored
+    }
+    if (!this.accessToken && process.env.ZALO_OA_ACCESS_TOKEN) {
+      this.accessToken = process.env.ZALO_OA_ACCESS_TOKEN;
+    }
+    if (!this.refreshToken && process.env.ZALO_OA_REFRESH_TOKEN) {
+      this.refreshToken = process.env.ZALO_OA_REFRESH_TOKEN;
+    }
+    if (!this.tokenExpiresAt && process.env.ZALO_OA_TOKEN_EXPIRES_AT) {
+      this.tokenExpiresAt = Number(process.env.ZALO_OA_TOKEN_EXPIRES_AT);
+    }
+  }
+
+  private persistTokens(): void {
+    try {
+      fs.writeFileSync(
+        TOKEN_CACHE_FILE,
+        JSON.stringify(
+          {
+            accessToken: this.accessToken,
+            refreshToken: this.refreshToken,
+            tokenExpiresAt: this.tokenExpiresAt,
+            tokenExpiredOrInvalid: this.tokenExpiredOrInvalid,
+            updatedAt: new Date().toISOString(),
+          },
+          null,
+          2
+        ),
+        'utf-8'
+      );
+    } catch (err: any) {
+      console.warn('[ZaloOAClient] Khong the luu cache token:', err.message);
+    }
   }
 
   public isConfigured(): boolean {
-    return Boolean(this.oaId && (this.accessToken || (this.appId && this.appSecret)));
+    return Boolean(this.oaId && (this.accessToken || this.refreshToken || (this.appId && this.appSecret)));
   }
 
   public getStatus(): {
     configured: boolean;
     hasAccessToken: boolean;
+    isTokenExpired: boolean;
     oaId: string;
     appId: string;
     expiresInHours?: number;
@@ -41,9 +92,15 @@ export class ZaloOAClient {
       ? Math.round((this.tokenExpiresAt - nowSec) / 3600 * 10) / 10 
       : undefined;
 
+    const isTokenExpired = Boolean(
+      this.tokenExpiredOrInvalid || 
+      (this.tokenExpiresAt && this.tokenExpiresAt <= nowSec)
+    );
+
     return {
       configured: this.isConfigured(),
-      hasAccessToken: Boolean(this.accessToken),
+      hasAccessToken: Boolean(this.accessToken) && !isTokenExpired,
+      isTokenExpired,
       oaId: this.oaId,
       appId: this.appId,
       expiresInHours,
@@ -85,6 +142,8 @@ export class ZaloOAClient {
       this.refreshToken = res.data.refresh_token || this.refreshToken;
       const expiresIn = Number(res.data.expires_in) || 90000;
       this.tokenExpiresAt = Math.floor(Date.now() / 1000) + expiresIn;
+      this.tokenExpiredOrInvalid = false;
+      this.persistTokens();
       return {
         accessToken: this.accessToken!,
         refreshToken: this.refreshToken || '',
@@ -100,7 +159,8 @@ export class ZaloOAClient {
    */
   public async refreshAccessToken(): Promise<string | null> {
     if (!this.refreshToken) {
-      return this.accessToken;
+      this.tokenExpiredOrInvalid = true;
+      return null;
     }
 
     try {
@@ -121,20 +181,46 @@ export class ZaloOAClient {
         this.refreshToken = res.data.refresh_token || this.refreshToken;
         const expiresIn = Number(res.data.expires_in) || 90000;
         this.tokenExpiresAt = Math.floor(Date.now() / 1000) + expiresIn;
+        this.tokenExpiredOrInvalid = false;
+        this.persistTokens();
         console.log('[ZaloOAClient] Làm mới Access Token thành công. Hiệu lực:', expiresIn, 'giây');
         return this.accessToken;
       }
+
+      console.warn('[ZaloOAClient] Làm mới token thất bại:', res.data);
+      this.tokenExpiredOrInvalid = true;
+      this.persistTokens();
+      return null;
     } catch (err: any) {
       console.error('[ZaloOAClient] Lỗi khi làm mới Access Token:', err?.response?.data || err.message);
+      this.tokenExpiredOrInvalid = true;
+      return null;
     }
-
-    return this.accessToken;
   }
 
   /**
-   * Lấy token hợp lệ, tự động refresh nếu gần hết hạn (dưới 1 giờ)
+   * Kiểm tra mã lỗi token hết hạn từ Zalo Open API
+   */
+  private isTokenExpiredError(resData: any): boolean {
+    if (!resData) return false;
+    return (
+      resData.error === -216 ||
+      resData.error === -204 ||
+      resData.error === -14014 ||
+      (typeof resData.message === 'string' && resData.message.toLowerCase().includes('expired')) ||
+      (typeof resData.message === 'string' && resData.message.toLowerCase().includes('invalid')) ||
+      (typeof resData.error_description === 'string' && resData.error_description.toLowerCase().includes('invalid refresh token'))
+    );
+  }
+
+  /**
+   * Lấy token hợp lệ, tự động refresh nếu chưa có hạn hoặc còn dưới 30 phút
    */
   public async getValidAccessToken(): Promise<string | null> {
+    if (this.tokenExpiredOrInvalid) {
+      return null;
+    }
+
     if (!this.accessToken && process.env.ZALO_OA_ACCESS_TOKEN) {
       this.accessToken = process.env.ZALO_OA_ACCESS_TOKEN;
     }
@@ -142,7 +228,7 @@ export class ZaloOAClient {
       this.refreshToken = process.env.ZALO_OA_REFRESH_TOKEN;
     }
     const nowSec = Math.floor(Date.now() / 1000);
-    if (this.tokenExpiresAt && this.tokenExpiresAt - nowSec < 3600) {
+    if (this.refreshToken && this.tokenExpiresAt && this.tokenExpiresAt - nowSec < 1800) {
       await this.refreshAccessToken();
     }
     return this.accessToken;
@@ -153,7 +239,7 @@ export class ZaloOAClient {
    * Endpoint: POST https://openapi.zalo.me/v3.0/oa/message/cs
    */
   public async sendTextMessage(zaloUserId: string, text: string): Promise<ZaloOASendResult> {
-    const token = await this.getValidAccessToken();
+    let token = await this.getValidAccessToken();
 
     if (!token) {
       console.warn(`[ZaloOAClient] Chưa cấu hình ZALO_OA_ACCESS_TOKEN. Tin nhắn lưu nội bộ: "${text.slice(0, 40)}..."`);
@@ -165,32 +251,34 @@ export class ZaloOAClient {
     }
 
     try {
-      const response = await axios.post(
+      let response = await axios.post(
         'https://openapi.zalo.me/v3.0/oa/message/cs',
-        {
-          recipient: {
-            user_id: zaloUserId,
-          },
-          message: {
-            text,
-          },
-        },
-        {
-          headers: {
-            'Content-Type': 'application/json',
-            access_token: token,
-          },
-          timeout: 10000,
-        }
+        { recipient: { user_id: zaloUserId }, message: { text } },
+        { headers: { 'Content-Type': 'application/json', access_token: token }, timeout: 10000 }
       );
+
+      if (this.isTokenExpiredError(response.data)) {
+        console.log('[ZaloOAClient] Token hết hạn khi gửi tin, đang tự động làm mới...');
+        token = await this.refreshAccessToken();
+        if (token) {
+          response = await axios.post(
+            'https://openapi.zalo.me/v3.0/oa/message/cs',
+            { recipient: { user_id: zaloUserId }, message: { text } },
+            { headers: { 'Content-Type': 'application/json', access_token: token }, timeout: 10000 }
+          );
+        } else {
+          this.tokenExpiredOrInvalid = true;
+          this.persistTokens();
+          return {
+            success: false,
+            errorMessage: 'Token Zalo OA hết hạn và không thể tự động làm mới. Vui lòng cấp lại quyền OA.',
+          };
+        }
+      }
 
       const resData = response.data;
       if (resData.error === 0) {
-        return {
-          success: true,
-          messageId: resData.data?.message_id,
-          raw: resData,
-        };
+        return { success: true, messageId: resData.data?.message_id, raw: resData };
       }
 
       console.warn('[ZaloOAClient] Zalo OA trả về lỗi:', resData);
@@ -238,19 +326,33 @@ export class ZaloOAClient {
    * GET https://openapi.zalo.me/v2.0/oa/listrecentchat
    */
   public async getRecentChats(offset = 0, count = 10): Promise<any[]> {
-    const token = await this.getValidAccessToken();
-    console.log('[ZaloOAClient] getRecentChats with token:', token ? `${token.slice(0, 10)}...` : 'NULL');
+    let token = await this.getValidAccessToken();
     if (!token) return [];
 
     try {
       const safeCount = Math.min(count, 10);
-      const res = await axios.get('https://openapi.zalo.me/v2.0/oa/listrecentchat', {
+      let res = await axios.get('https://openapi.zalo.me/v2.0/oa/listrecentchat', {
         headers: { access_token: token },
         params: { data: JSON.stringify({ offset, count: safeCount }) },
         timeout: 10000,
       });
 
-      console.log('[ZaloOAClient] listrecentchat response:', res.data);
+      if (this.isTokenExpiredError(res.data)) {
+        console.log('[ZaloOAClient] Token hết hạn khi lấy danh sách chat, tự động làm mới...');
+        token = await this.refreshAccessToken();
+        if (token) {
+          res = await axios.get('https://openapi.zalo.me/v2.0/oa/listrecentchat', {
+            headers: { access_token: token },
+            params: { data: JSON.stringify({ offset, count: safeCount }) },
+            timeout: 10000,
+          });
+        } else {
+          this.tokenExpiredOrInvalid = true;
+          this.persistTokens();
+          return [];
+        }
+      }
+
       if (res.data.error === 0 && Array.isArray(res.data.data)) {
         return res.data.data;
       }
@@ -265,16 +367,32 @@ export class ZaloOAClient {
    * GET https://openapi.zalo.me/v2.0/oa/conversation
    */
   public async getConversationMessages(userId: string, offset = 0, count = 10): Promise<any[]> {
-    const token = await this.getValidAccessToken();
+    let token = await this.getValidAccessToken();
     if (!token) return [];
 
     try {
       const safeCount = Math.min(count, 10);
-      const res = await axios.get('https://openapi.zalo.me/v2.0/oa/conversation', {
+      let res = await axios.get('https://openapi.zalo.me/v2.0/oa/conversation', {
         headers: { access_token: token },
         params: { data: JSON.stringify({ user_id: userId, offset, count: safeCount }) },
         timeout: 10000,
       });
+
+      if (this.isTokenExpiredError(res.data)) {
+        console.log(`[ZaloOAClient] Token hết hạn khi lấy tin nhắn cho user ${userId}, tự động làm mới...`);
+        token = await this.refreshAccessToken();
+        if (token) {
+          res = await axios.get('https://openapi.zalo.me/v2.0/oa/conversation', {
+            headers: { access_token: token },
+            params: { data: JSON.stringify({ user_id: userId, offset, count: safeCount }) },
+            timeout: 10000,
+          });
+        } else {
+          this.tokenExpiredOrInvalid = true;
+          this.persistTokens();
+          return [];
+        }
+      }
 
       if (res.data.error === 0 && Array.isArray(res.data.data)) {
         return res.data.data;
@@ -290,15 +408,30 @@ export class ZaloOAClient {
    * GET https://openapi.zalo.me/v2.0/oa/getprofile
    */
   public async getUserProfile(userId: string): Promise<any | null> {
-    const token = await this.getValidAccessToken();
+    let token = await this.getValidAccessToken();
     if (!token) return null;
 
     try {
-      const res = await axios.get('https://openapi.zalo.me/v2.0/oa/getprofile', {
+      let res = await axios.get('https://openapi.zalo.me/v2.0/oa/getprofile', {
         headers: { access_token: token },
         params: { data: JSON.stringify({ user_id: userId }) },
         timeout: 10000,
       });
+
+      if (this.isTokenExpiredError(res.data)) {
+        token = await this.refreshAccessToken();
+        if (token) {
+          res = await axios.get('https://openapi.zalo.me/v2.0/oa/getprofile', {
+            headers: { access_token: token },
+            params: { data: JSON.stringify({ user_id: userId }) },
+            timeout: 10000,
+          });
+        } else {
+          this.tokenExpiredOrInvalid = true;
+          this.persistTokens();
+          return null;
+        }
+      }
 
       if (res.data.error === 0 && res.data.data) {
         return res.data.data;
