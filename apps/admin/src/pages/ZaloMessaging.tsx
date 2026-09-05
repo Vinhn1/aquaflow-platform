@@ -101,7 +101,7 @@ export const ZaloMessaging: React.FC = () => {
 
   const fetchConversations = async (silent = false) => {
     try {
-      if (!silent) setLoadingConv(true);
+      if (!silent && conversations.length === 0) setLoadingConv(true);
       const queryParams = new URLSearchParams();
       if (searchQuery) queryParams.append('search', searchQuery);
 
@@ -109,7 +109,23 @@ export const ZaloMessaging: React.FC = () => {
       if (res.ok) {
         const json = await res.json();
         if (json.data) {
-          setConversations(json.data);
+          setConversations((prev) => {
+            if (prev.length === json.data.length) {
+              const isSame = prev.every((c, idx) => {
+                const n = json.data[idx];
+                return (
+                  c.id === n.id &&
+                  c.lastMessage === n.lastMessage &&
+                  c.lastMessageTime === n.lastMessageTime &&
+                  c.unreadCount === n.unreadCount &&
+                  c.customerName === n.customerName &&
+                  c.avatarUrl === n.avatarUrl
+                );
+              });
+              if (isSame) return prev;
+            }
+            return json.data;
+          });
           if (!selectedConvId && json.data.length > 0) {
             setSelectedConvId(json.data[0].id);
           }
@@ -137,11 +153,13 @@ export const ZaloMessaging: React.FC = () => {
           });
         }
       }
-      // Đánh dấu đã đọc
-      fetch(`/api/v1/zalo/conversations/${convId}/read`, { method: 'POST' });
-      setConversations((prev) =>
-        prev.map((c) => (c.id === convId ? { ...c, unreadCount: 0 } : c))
-      );
+      // Chỉ đánh dấu đã đọc nếu thực sự đang có tin chưa đọc
+      setConversations((prev) => {
+        const target = prev.find((c) => c.id === convId);
+        if (!target || target.unreadCount === 0) return prev;
+        fetch(`/api/v1/zalo/conversations/${convId}/read`, { method: 'POST' });
+        return prev.map((c) => (c.id === convId ? { ...c, unreadCount: 0 } : c));
+      });
     } catch {
       // Ignore
     }
@@ -428,7 +446,7 @@ export const ZaloMessaging: React.FC = () => {
 
             {/* List Conversations */}
             <div className="flex-1 overflow-y-auto divide-y divide-slate-100">
-              {loadingConv ? (
+              {loadingConv && conversations.length === 0 ? (
                 <div className="p-8 text-center text-xs text-slate-400">Đang tải hội thoại...</div>
               ) : conversations.length === 0 ? (
                 <div className="p-8 text-center text-xs text-slate-400">Không tìm thấy hội thoại nào</div>
