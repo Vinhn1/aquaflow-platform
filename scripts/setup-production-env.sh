@@ -1,8 +1,8 @@
 #!/bin/bash
 set -e
 
-echo "[AquaFlow] 1. Dang tao tep .env.production chuan..."
-cat << 'EOF' > /opt/aquaflow-platform/.env.production
+echo "[AquaFlow] 1. Dang tao tep .env.production va .env chuan..."
+cat << 'EOF' > .env.production
 NODE_ENV=production
 PORT=3000
 API_BASE_URL=https://api.websiteproject.id.vn
@@ -33,10 +33,18 @@ ZALO_OA_ACCESS_TOKEN=LQZE2UkNAqHQfCO9vfSkH5obm0pZZNj5FDxfUFck33T2xPWB_he_5K_Nfno
 ZALO_OA_REFRESH_TOKEN=tPCCTO1FcXlIdmHrZK-V6zIU0d28LU9qYCK_Ig5nmIIzvIjEWLUn8DxLAZ7xGS4ufUPR1PXBnXEV-Hu-Xr25AA75UYopJuH4uU9lRCDl-NRSs11BZWJgMgUGFKs_9DbXZRX52OyAesQFsqz8ed2hGOVcLdwwIRGNkUrl0Rr_bsocudPd-pATIyMk2rtyV_TNsSneES9EWnJUXaGbzoUc5wceG7oqDwj3ZPj2BvOJsagpcKHEw3YfN_2DTLl9C8ipwAHl3B4izY2ClXqqW0YA48Ex5twFE_XutOGwITuBeoE1ZKH9gZol8eVqJ3IAHPGkYSnj6e84ack2qLXKkbsWFhBRQpME3l0wtBaC1USTbJMzhbGddoNA7Opm4dIZOkrncjKWQhf2t5o8n31Cb6ZfHupS57fBTshbhbo3M94H
 EOF
 
-echo "[AquaFlow] 2. Dong bo Prisma Schema vao PostgreSQL (tao bang zalo_conversations)..."
+cp .env.production .env
+
+echo "[AquaFlow] 2. Cap nhat mat khau PostgreSQL container dong nhat..."
+docker compose -f docker-compose.prod.yml exec -T postgres psql -U aquaflow_user -d aquaflow_cawaco -c "ALTER USER aquaflow_user WITH PASSWORD 'cawaco_pg_pass_2026_x89kL';" 2>/dev/null || true
+
+echo "[AquaFlow] 3. Dong bo Prisma Schema vao PostgreSQL..."
 docker compose -f docker-compose.prod.yml --env-file .env.production run --rm --user root api npx prisma db push --schema=apps/api/prisma/schema.prisma --accept-data-loss
 
-echo "[AquaFlow] 3. Khoi dong lai cac container (Force Recreate)..."
+echo "[AquaFlow] 3. Khoi tao du lieu he thong (seed)..."
+docker compose -f docker-compose.prod.yml --env-file .env.production run --rm --user root api npx tsx apps/api/prisma/seed.ts || true
+
+echo "[AquaFlow] 4. Khoi dong lai cac container (Force Recreate)..."
 docker compose -f docker-compose.prod.yml --env-file .env.production up -d --force-recreate api admin
 
 echo "[AquaFlow] 4. Cho 5 giay de backend khoi dong..."

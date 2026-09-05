@@ -33,7 +33,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   const [token, setToken] = useState<string | null>(null);
   const [loading, setLoading] = useState<boolean>(true);
 
-  // Khoi phuc phien dang nhap tu localStorage
+  // Khoi phuc va xac thuc phien dang nhap tu localStorage
   useEffect(() => {
     const savedToken = localStorage.getItem(TOKEN_KEY);
     const savedUser = localStorage.getItem(USER_KEY);
@@ -41,17 +41,31 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     if (savedToken && savedUser) {
       try {
         const parsedUser = JSON.parse(savedUser);
-        // Tu dong lam sach neu token cu truoc day qua lon (> 1000 ky tu)
-        if (savedToken.length > 1000) {
-          localStorage.removeItem(TOKEN_KEY);
-          quickLogin('ADMIN').catch(() => {
-            setToken(null);
-            setUser(null);
+        // Xac thuc token xem con hop le khong
+        fetch('/api/v1/auth/me', {
+          headers: { Authorization: `Bearer ${savedToken}` },
+        })
+          .then((res) => {
+            if (!res.ok) {
+              // Token da het han hoac khong hop le -> xoa session va yeu cau dang nhap lai
+              localStorage.removeItem(TOKEN_KEY);
+              localStorage.removeItem(USER_KEY);
+              setToken(null);
+              setUser(null);
+            } else {
+              setToken(savedToken);
+              setUser(parsedUser);
+            }
+          })
+          .catch(() => {
+            // Loi mang, tam giu session
+            setToken(savedToken);
+            setUser(parsedUser);
+          })
+          .finally(() => {
+            setLoading(false);
           });
-        } else {
-          setToken(savedToken);
-          setUser(parsedUser);
-        }
+        return;
       } catch {
         localStorage.removeItem(TOKEN_KEY);
         localStorage.removeItem(USER_KEY);

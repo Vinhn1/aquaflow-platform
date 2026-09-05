@@ -17,11 +17,10 @@ export function createAdminStatsRouter(): Router {
           },
         });
       } catch {
-        // Fallback default
-        queueWaiting = 4;
+        queueWaiting = 0;
       }
 
-      // 2. Dem su co nuoc can xu ly (SUBMITTED, RECEIVED, IN_PROGRESS, DISPATCHED)
+      // 2. Dem su co nuoc can xu ly
       let complaintsPending = 0;
       try {
         complaintsPending = await prisma.complaint.count({
@@ -37,10 +36,10 @@ export function createAdminStatsRouter(): Router {
           },
         });
       } catch {
-        complaintsPending = 3;
+        complaintsPending = 0;
       }
 
-      // 3. Dem ho so dang ky lap moi can tham dinh (SUBMITTED, DOCS_APPROVED, SURVEYING)
+      // 3. Dem ho so dang ky lap moi can tham dinh
       let registrationsPending = 0;
       try {
         registrationsPending = await prisma.waterRegistration.count({
@@ -55,7 +54,7 @@ export function createAdminStatsRouter(): Router {
           },
         });
       } catch {
-        registrationsPending = 2;
+        registrationsPending = 0;
       }
 
       // 4. Dem lich cup nuoc dang hoat dong
@@ -68,7 +67,7 @@ export function createAdminStatsRouter(): Router {
           },
         });
       } catch {
-        activeOutages = 1;
+        activeOutages = 0;
       }
 
       // 5. Dem can bo nhan vien dang truc/hoat dong
@@ -82,7 +81,7 @@ export function createAdminStatsRouter(): Router {
           },
         });
       } catch {
-        activeStaff = 8;
+        activeStaff = 0;
       }
 
       return res.json({
@@ -100,11 +99,11 @@ export function createAdminStatsRouter(): Router {
       return res.status(200).json({
         success: true,
         data: {
-          queueWaiting: 4,
-          complaintsPending: 3,
-          registrationsPending: 2,
-          activeOutages: 1,
-          activeStaff: 8,
+          queueWaiting: 0,
+          complaintsPending: 0,
+          registrationsPending: 0,
+          activeOutages: 0,
+          activeStaff: 0,
           timestamp: new Date().toISOString(),
         },
       });
