@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { useAuth } from '../context/AuthContext.js';
 
 export const LoginPage: React.FC = () => {
-  const { login, quickLogin } = useAuth();
+  const { login } = useAuth();
   const [identifier, setIdentifier] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
@@ -23,18 +23,6 @@ export const LoginPage: React.FC = () => {
       await login(identifier, password);
     } catch (err: any) {
       setError(err?.message || 'Đăng nhập không thành công.');
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const handleQuick = async (role: 'ADMIN' | 'STAFF_Q1' | 'STAFF_Q2' | 'MANAGER' | 'TECH') => {
-    setLoading(true);
-    setError(null);
-    try {
-      await quickLogin(role);
-    } catch (err: any) {
-      setError(err?.message || 'Đăng nhập nhanh thất bại.');
     } finally {
       setLoading(false);
     }
@@ -134,27 +122,6 @@ export const LoginPage: React.FC = () => {
               {loading ? 'Đang xác thực...' : 'Đăng Nhập Vào Hệ Thống'}
             </button>
           </form>
-
-          {/* Quick Demo Switcher */}
-          <div className="mt-8 pt-6 border-t border-slate-700/60">
-            <div className="text-[11px] font-bold text-slate-400 uppercase tracking-wider text-center mb-3">
-              Đăng Nhập Nhanh (Mật khẩu mặc định: 123456)
-            </div>
-
-            <button
-              type="button"
-              onClick={() => handleQuick('ADMIN')}
-              disabled={loading}
-              className="w-full p-3 rounded-xl bg-slate-900/80 hover:bg-blue-600/20 border border-slate-700 hover:border-blue-500 text-left transition space-y-1"
-            >
-              <div className="font-bold text-white flex items-center gap-1.5">
-                <span className="w-2 h-2 rounded-full bg-purple-400" />
-                <span>CW-ADMIN</span>
-              </div>
-              <div className="text-[11px] text-blue-300 font-medium">Quản Trị Viên Hệ Thống</div>
-              <div className="text-[10px] text-slate-400">Toàn quyền hệ thống &amp; Cấp tài khoản cán bộ</div>
-            </button>
-          </div>
         </div>
 
         {/* Footer info */}
