@@ -355,7 +355,7 @@ export const ZaloMessaging: React.FC = () => {
                 title="Nhấn để mở trang xác thực cấp quyền Zalo Official Account"
               >
                 <span className="w-2 h-2 rounded-full bg-blue-500"></span>
-                Zalo OA (ID: {stats?.zaloOAStatus?.oaId || '2562028218754028209'}) · Nhấn Cấp Quyền OAuth
+                Zalo OA · Nhấn Cấp Quyền OAuth
               </a>
             )}
           </div>

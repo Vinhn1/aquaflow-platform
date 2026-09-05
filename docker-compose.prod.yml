@@ -29,6 +29,7 @@ services:
     environment:
       NODE_ENV: production
       PORT: 3000
+      API_BASE_URL: ${API_BASE_URL:-https://api.websiteproject.id.vn}
       DATABASE_URL: ${DATABASE_URL:-postgresql://${POSTGRES_USER:-aquaflow_user}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB:-aquaflow_cawaco}?schema=public}
       JWT_SECRET: ${JWT_SECRET}
       JWT_EXPIRES_IN: ${JWT_EXPIRES_IN:-7d}
@@ -40,6 +41,8 @@ services:
       ZALO_APP_SECRET: ${ZALO_APP_SECRET:-e63PhT2GDL5N5v6L3OUw}
       ZALO_MINI_APP_ID: ${ZALO_MINI_APP_ID:-2784671839475576206}
       ZALO_OA_ID: ${ZALO_OA_ID:-2562028218754028209}
+      ZALO_OA_ACCESS_TOKEN: ${ZALO_OA_ACCESS_TOKEN}
+      ZALO_OA_REFRESH_TOKEN: ${ZALO_OA_REFRESH_TOKEN}
       VIETQR_CLIENT_ID: ${VIETQR_CLIENT_ID}
       VIETQR_API_KEY: ${VIETQR_API_KEY}
     ports:

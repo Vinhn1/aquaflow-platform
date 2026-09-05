@@ -15,7 +15,8 @@ export function createZaloRouter(): Router {
 
   // GET /api/v1/zalo/auth/url — Lấy URL cấp quyền Zalo OA
   router.get('/auth/url', (req, res) => {
-    const redirectUri = (req.query.redirectUri as string) || `${req.protocol}://${req.get('host')}/api/v1/zalo/auth/callback`;
+    const baseUrl = process.env.API_BASE_URL || `${req.protocol}://${req.get('host')}`;
+    const redirectUri = (req.query.redirectUri as string) || `${baseUrl}/api/v1/zalo/auth/callback`;
     const authUrl = zaloOAClient.getAuthorizationUrl(redirectUri);
     return res.json({ success: true, data: { authUrl } });
   });
@@ -34,7 +35,7 @@ export function createZaloRouter(): Router {
           <h2 style="color: #16A34A;">Kết nối Zalo OA Thành Công!</h2>
           <p>AquaFlow CAWACO đã nhận được Access Token và Refresh Token từ Zalo Official Account.</p>
           <p>Hiệu lực token: <strong>${result.expiresIn} giây</strong></p>
-          <a href="/admin/zalo-cskh" style="display: inline-block; margin-top: 20px; padding: 10px 20px; background: #0284C7; color: #fff; text-decoration: none; border-radius: 6px;">Quay lại Trang Quản Trị CSKH</a>
+          <a href="/" style="display: inline-block; margin-top: 20px; padding: 10px 20px; background: #0284C7; color: #fff; text-decoration: none; border-radius: 6px;">Quay lại Trang Quản Trị CSKH</a>
         </div>
       `);
     } catch (error: any) {
