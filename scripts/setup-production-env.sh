@@ -33,10 +33,13 @@ ZALO_OA_ACCESS_TOKEN=LQZE2UkNAqHQfCO9vfSkH5obm0pZZNj5FDxfUFck33T2xPWB_he_5K_Nfno
 ZALO_OA_REFRESH_TOKEN=tPCCTO1FcXlIdmHrZK-V6zIU0d28LU9qYCK_Ig5nmIIzvIjEWLUn8DxLAZ7xGS4ufUPR1PXBnXEV-Hu-Xr25AA75UYopJuH4uU9lRCDl-NRSs11BZWJgMgUGFKs_9DbXZRX52OyAesQFsqz8ed2hGOVcLdwwIRGNkUrl0Rr_bsocudPd-pATIyMk2rtyV_TNsSneES9EWnJUXaGbzoUc5wceG7oqDwj3ZPj2BvOJsagpcKHEw3YfN_2DTLl9C8ipwAHl3B4izY2ClXqqW0YA48Ex5twFE_XutOGwITuBeoE1ZKH9gZol8eVqJ3IAHPGkYSnj6e84ack2qLXKkbsWFhBRQpME3l0wtBaC1USTbJMzhbGddoNA7Opm4dIZOkrncjKWQhf2t5o8n31Cb6ZfHupS57fBTshbhbo3M94H
 EOF
 
-echo "[AquaFlow] 2. Khoi dong lai cac container (Force Recreate)..."
+echo "[AquaFlow] 2. Dong bo Prisma Schema vao PostgreSQL (tao bang zalo_conversations)..."
+docker compose -f docker-compose.prod.yml --env-file .env.production run --rm --user root api npx prisma db push --schema=apps/api/prisma/schema.prisma --accept-data-loss
+
+echo "[AquaFlow] 3. Khoi dong lai cac container (Force Recreate)..."
 docker compose -f docker-compose.prod.yml --env-file .env.production up -d --force-recreate api admin
 
-echo "[AquaFlow] 3. Cho 5 giay de backend khoi dong..."
+echo "[AquaFlow] 4. Cho 5 giay de backend khoi dong..."
 sleep 5
 
 echo "[AquaFlow] 4. Kich hoat dong bo tin nhan Zalo OA..."
