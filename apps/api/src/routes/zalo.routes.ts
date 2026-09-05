@@ -53,6 +53,11 @@ export function createZaloRouter(): Router {
     }
   });
 
+  // GET /api/v1/zalo/webhook — Hỗ trợ kiểm tra/xác thực webhook từ Zalo Portal
+  router.get('/webhook', (req, res) => {
+    return res.json({ error: 0, message: 'Webhook endpoint active' });
+  });
+
   // POST /api/v1/zalo/webhook — Tiếp nhận Webhook tin nhắn gửi từ Zalo OA
   router.post('/webhook', async (req, res) => {
     try {
@@ -211,15 +216,7 @@ export function createZaloRouter(): Router {
     }
   });
 
-  // POST /api/v1/zalo/webhook — Tiếp nhận webhook từ Zalo OA Platform
-  router.post('/webhook', async (req, res) => {
-    try {
-      const result = await ZaloMessagingService.handleWebhookEvent(req.body);
-      return res.json({ error: 0, message: 'OK', result });
-    } catch (error: any) {
-      return res.status(500).json({ error: -1, message: error.message });
-    }
-  });
+
 
   // GET /api/v1/zalo/stats — Thống kê Zalo CSKH
   router.get('/stats', async (req, res) => {

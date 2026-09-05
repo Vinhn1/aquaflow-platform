@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useAuth } from '../context/AuthContext.js';
 import { toast } from 'sonner';
 
@@ -97,9 +97,11 @@ export const ZaloMessaging: React.FC = () => {
   // Stats state
   const [stats, setStats] = useState<any>(null);
 
-  const fetchConversations = async () => {
+  const messagesEndRef = useRef<HTMLDivElement | null>(null);
+
+  const fetchConversations = async (silent = false) => {
     try {
-      setLoadingConv(true);
+      if (!silent) setLoadingConv(true);
       const queryParams = new URLSearchParams();
       if (searchQuery) queryParams.append('search', searchQuery);
 
@@ -116,7 +118,7 @@ export const ZaloMessaging: React.FC = () => {
     } catch {
       // Ignore
     } finally {
-      setLoadingConv(false);
+      if (!silent) setLoadingConv(false);
     }
   };
 
@@ -127,7 +129,12 @@ export const ZaloMessaging: React.FC = () => {
       if (res.ok) {
         const json = await res.json();
         if (json.data) {
-          setMessages(json.data);
+          setMessages((prev) => {
+            if (prev.length === json.data.length && prev[prev.length - 1]?.id === json.data[json.data.length - 1]?.id) {
+              return prev;
+            }
+            return json.data;
+          });
         }
       }
       // Đánh dấu đã đọc
@@ -175,7 +182,7 @@ export const ZaloMessaging: React.FC = () => {
       if (res.ok) {
         const json = await res.json();
         toast.success(json.message || 'Đã đồng bộ tin nhắn từ Zalo OA');
-        await fetchConversations();
+        await fetchConversations(true);
         if (selectedConvId) {
           await fetchMessages(selectedConvId);
         }
@@ -190,21 +197,21 @@ export const ZaloMessaging: React.FC = () => {
   useEffect(() => {
     // Tự động đồng bộ một lần khi mở trang
     fetch('/api/v1/zalo/sync', { method: 'POST' })
-      .then(() => fetchConversations())
-      .catch(() => fetchConversations());
+      .then(() => fetchConversations(true))
+      .catch(() => fetchConversations(true));
 
     fetchBroadcasts();
     fetchStats();
   }, []);
 
-  // Tự động cập nhật mỗi 6 giây
+  // Tự động cập nhật thời gian thực mỗi 2.5 giây
   useEffect(() => {
     const timer = setInterval(() => {
-      fetchConversations();
+      fetchConversations(true);
       if (selectedConvId) {
         fetchMessages(selectedConvId);
       }
-    }, 6000);
+    }, 2500);
     return () => clearInterval(timer);
   }, [selectedConvId]);
 
@@ -213,6 +220,11 @@ export const ZaloMessaging: React.FC = () => {
       fetchMessages(selectedConvId);
     }
   }, [selectedConvId]);
+
+  // Cuộn tin nhắn xuống dưới cùng khi có tin nhắn mới
+  useEffect(() => {
+    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+  }, [messages.length, selectedConvId]);
 
   // Gửi tin nhắn từ Admin/CSKH
   const handleSendMessage = async (textToSend?: string) => {
@@ -306,6 +318,10 @@ export const ZaloMessaging: React.FC = () => {
                 <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-bold bg-emerald-100 text-emerald-800 border border-emerald-300">
                   <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
                   Zalo OA Đang Hoạt Động
+                </span>
+                <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-medium bg-slate-100 text-slate-700 border border-slate-200">
+                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
+                  Tự động đồng bộ
                 </span>
                 <button
                   onClick={handleSyncZalo}
@@ -546,6 +562,7 @@ export const ZaloMessaging: React.FC = () => {
                     </div>
                   );
                 })}
+                <div ref={messagesEndRef} />
               </div>
 
               {/* Canned responses & Input */}
