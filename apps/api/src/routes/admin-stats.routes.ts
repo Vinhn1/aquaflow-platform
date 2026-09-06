@@ -1,6 +1,6 @@
 import { Router } from 'express';
 import { prisma } from '../lib/prisma.js';
-import { ComplaintStatus, RegistrationStatus, TicketStatus } from '@prisma/client';
+import { ComplaintStatus, RegistrationStatus, TicketStatus, MeterReadingStatus } from '@prisma/client';
 
 export function createAdminStatsRouter(): Router {
   const router = Router();
@@ -84,6 +84,18 @@ export function createAdminStatsRouter(): Router {
         activeStaff = 0;
       }
 
+      // 6. Dem chi so nuoc tu bao cho doi soat
+      let meterReadingsPending = 0;
+      try {
+        meterReadingsPending = await prisma.meterReading.count({
+          where: {
+            status: MeterReadingStatus.PENDING_REVIEW,
+          },
+        });
+      } catch {
+        meterReadingsPending = 0;
+      }
+
       return res.json({
         success: true,
         data: {
@@ -92,6 +104,7 @@ export function createAdminStatsRouter(): Router {
           registrationsPending,
           activeOutages,
           activeStaff,
+          meterReadingsPending,
           timestamp: new Date().toISOString(),
         },
       });
@@ -104,6 +117,7 @@ export function createAdminStatsRouter(): Router {
           registrationsPending: 0,
           activeOutages: 0,
           activeStaff: 0,
+          meterReadingsPending: 0,
           timestamp: new Date().toISOString(),
         },
       });

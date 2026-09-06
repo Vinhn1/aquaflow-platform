@@ -4,24 +4,68 @@ import { prisma } from '../lib/prisma.js';
 export function createMeterReadingRouter(): Router {
   const router = Router();
 
-  // GET /api/v1/meter-readings?customerCode=...
+  // GET /api/v1/meter-readings?customerCode=...&period=...&status=...&search=...
   router.get('/', async (req, res) => {
     try {
-      const customerCode = typeof req.query.customerCode === 'string' ? req.query.customerCode.toUpperCase() : null;
+      const customerCode = typeof req.query.customerCode === 'string' ? req.query.customerCode.toUpperCase().trim() : null;
+      const period = typeof req.query.period === 'string' && req.query.period.trim() !== '' ? req.query.period.trim() : null;
+      const status = typeof req.query.status === 'string' && req.query.status.trim() !== '' ? req.query.status.trim() : null;
+      const search = typeof req.query.search === 'string' && req.query.search.trim() !== '' ? req.query.search.trim() : null;
+
+      const where: any = {};
+
+      if (customerCode) {
+        where.customerCode = customerCode;
+      }
+
+      if (period && period !== 'ALL') {
+        where.period = period;
+      }
+
+      if (status && status !== 'ALL') {
+        where.status = status;
+      }
+
+      if (search) {
+        where.OR = [
+          { customerCode: { contains: search, mode: 'insensitive' } },
+          { meterId: { contains: search, mode: 'insensitive' } },
+          { customer: { fullName: { contains: search, mode: 'insensitive' } } },
+          { customer: { address: { contains: search, mode: 'insensitive' } } },
+        ];
+      }
 
       const readings = await prisma.meterReading.findMany({
-        where: customerCode ? { customerCode } : {},
+        where,
         orderBy: { submittedAt: 'desc' },
         include: {
           customer: {
             select: {
               fullName: true,
               address: true,
+              phone: true,
               meterSerialNumber: true,
             },
           },
         },
       });
+
+      // Lay danh sach tat ca cac ky doc de lam filter dropdown
+      const allReadings = await prisma.meterReading.findMany({
+        select: {
+          period: true,
+          status: true,
+          consumptionM3: true,
+        },
+      });
+
+      const distinctPeriods = Array.from(new Set(allReadings.map((r) => r.period))).sort().reverse();
+      const pendingCount = allReadings.filter((r) => r.status === 'PENDING_REVIEW').length;
+      const approvedCount = allReadings.filter((r) => r.status === 'APPROVED').length;
+      const rejectedCount = allReadings.filter((r) => r.status === 'REJECTED').length;
+      const totalConsumption = allReadings
+        .filter((r) => r.status === 'APPROVED')
+        .reduce((sum, r) => sum + (r.consumptionM3 || 0), 0);
 
       return res.json({
         success: true,
@@ -29,6 +73,7 @@ export function createMeterReadingRouter(): Router {
           id: r.id,
           customerCode: r.customerCode,
           customerName: r.customer?.fullName,
+          phone: r.customer?.phone,
           address: r.customer?.address,
           meterId: r.meterId,
           period: r.period,
@@ -40,6 +85,14 @@ export function createMeterReadingRouter(): Router {
           status: r.status,
           submittedAt: r.submittedAt.toISOString(),
         })),
+        stats: {
+          total: allReadings.length,
+          pending: pendingCount,
+          approved: approvedCount,
+          rejected: rejectedCount,
+          totalConsumption,
+          periods: distinctPeriods,
+        },
       });
     } catch (error: any) {
       return res.status(500).json({
@@ -151,7 +204,7 @@ export function createMeterReadingRouter(): Router {
   router.patch('/:id/status', async (req, res) => {
     try {
       const { id } = req.params;
-      const { status } = req.body;
+      const { status, notes } = req.body;
 
       if (!['PENDING_REVIEW', 'APPROVED', 'REJECTED'].includes(status)) {
         return res.status(400).json({
@@ -160,9 +213,23 @@ export function createMeterReadingRouter(): Router {
         });
       }
 
+      const updateData: any = { status };
+      if (typeof notes === 'string') {
+        updateData.notes = notes.trim();
+      }
+
       const updated = await prisma.meterReading.update({
         where: { id },
-        data: { status },
+        data: updateData,
+        include: {
+          customer: {
+            select: {
+              fullName: true,
+              address: true,
+              phone: true,
+            },
+          },
+        },
       });
 
       return res.json({

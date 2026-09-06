@@ -8,9 +8,10 @@ import { CustomerLookup } from './pages/CustomerLookup.js';
 import { StaffManagement } from './pages/StaffManagement.js';
 import { ProfilePage } from './pages/ProfilePage.js';
 import { ZaloMessaging } from './pages/ZaloMessaging.js';
+import { MeterReadings } from './pages/MeterReadings.js';
 import { useSidebarCounts } from './hooks/useSidebarCounts.js';
 
-export type AdminView = 'QUEUE' | 'COMPLAINTS' | 'OUTAGES' | 'CUSTOMERS' | 'STAFF' | 'PROFILE' | 'ZALO';
+export type AdminView = 'QUEUE' | 'COMPLAINTS' | 'METERS' | 'OUTAGES' | 'CUSTOMERS' | 'STAFF' | 'PROFILE' | 'ZALO';
 
 const AdminLayout: React.FC = () => {
   const { user, logout } = useAuth();
@@ -25,6 +26,7 @@ const AdminLayout: React.FC = () => {
   // Mac dinh chuyen tab phu hop neu role han che
   const canAccessQueue = isSuperAdmin || isManager || isCounterStaff;
   const canAccessComplaints = isSuperAdmin || isManager || isFieldWorker;
+  const canAccessMeters = isSuperAdmin || isManager || isCounterStaff || isFieldWorker;
   const canAccessOutages = isSuperAdmin || isManager;
   const canAccessCustomers = isSuperAdmin || isManager || isCounterStaff;
   const canAccessStaff = isSuperAdmin || isManager;
@@ -131,7 +133,37 @@ const AdminLayout: React.FC = () => {
               )}
             </button>
 
-            {/* 3. Thông Báo Cúp Nước */}
+            {/* 3. Duyệt Chỉ Số Nước */}
+            <button
+              onClick={() => setCurrentView('METERS')}
+              className={`w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl text-sm font-medium transition duration-150 text-left group ${
+                currentView === 'METERS'
+                  ? 'bg-gradient-to-r from-sky-500 to-blue-600 text-white shadow-lg shadow-sky-950/30 font-semibold border border-sky-400/30'
+                  : 'text-sky-100/80 hover:text-white hover:bg-white/10'
+              }`}
+            >
+              <div className="flex items-center gap-3 min-w-0">
+                <svg className="w-4 h-4 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
+                  <circle cx="12" cy="12" r="10" />
+                  <polyline points="12 6 12 12 16 14" />
+                </svg>
+                <span className="truncate">Duyệt Chỉ Số Nước</span>
+              </div>
+              {counts.meterReadingsPending > 0 && (
+                <span
+                  title={`${counts.meterReadingsPending} chỉ số nước tự báo chờ đối soát`}
+                  className={`ml-2 px-2 py-0.5 rounded-full text-[11px] font-bold font-mono tracking-tight flex-shrink-0 transition ${
+                    currentView === 'METERS'
+                      ? 'bg-white text-blue-900 shadow-xs'
+                      : 'bg-amber-500/25 text-amber-200 border border-amber-400/30 group-hover:bg-amber-500 group-hover:text-white'
+                  }`}
+                >
+                  {counts.meterReadingsPending}
+                </span>
+              )}
+            </button>
+
+            {/* 4. Thông Báo Cúp Nước */}
             <button
               onClick={() => setCurrentView('OUTAGES')}
               className={`w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-sm font-medium transition duration-150 text-left ${
@@ -279,6 +311,7 @@ const AdminLayout: React.FC = () => {
             <span className="font-bold text-slate-800">
               {currentView === 'QUEUE' && 'Gọi Số Quầy Trực Tiếp'}
               {currentView === 'COMPLAINTS' && 'Điều Phối Sự Cố Mạng Lưới'}
+              {currentView === 'METERS' && 'Tiếp Nhận & Phê Duyệt Chỉ Số Đồng Hồ Nước'}
               {currentView === 'OUTAGES' && 'Quản Lý Thông Báo & Cúp Nước'}
               {currentView === 'ZALO' && 'Quản Trị Tin Nhắn Zalo & CSKH'}
               {currentView === 'CUSTOMERS' && 'Tra Cứu Hồ Sơ Khách Hàng'}
@@ -299,6 +332,7 @@ const AdminLayout: React.FC = () => {
         <main className={`flex-1 ${currentView === 'ZALO' ? 'p-0 overflow-hidden' : 'overflow-y-auto p-6'} bg-slate-50 flex flex-col`}>
           {currentView === 'QUEUE' && <QueueMonitor />}
           {currentView === 'COMPLAINTS' && <Complaints />}
+          {currentView === 'METERS' && <MeterReadings />}
           {currentView === 'OUTAGES' && <NewsManagement />}
           {currentView === 'ZALO' && <ZaloMessaging />}
           {currentView === 'CUSTOMERS' && <CustomerLookup />}

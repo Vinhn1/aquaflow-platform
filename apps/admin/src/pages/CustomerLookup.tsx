@@ -40,6 +40,8 @@ export const CustomerLookup: React.FC = () => {
   const [customer, setCustomer] = useState<any | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [customerReadings, setCustomerReadings] = useState<any[]>([]);
+  const [loadingReadings, setLoadingReadings] = useState(false);
 
   // Tab 2: Đơn đăng ký từ Mini App
   const [registrations, setRegistrations] = useState<WaterRegistrationItem[]>([]);
@@ -58,6 +60,7 @@ export const CustomerLookup: React.FC = () => {
     if (!codeToLookup.trim()) return;
     setLoading(true);
     setError(null);
+    setLoadingReadings(true);
     try {
       const res = await fetch(`/api/v1/customers/${codeToLookup.trim().toUpperCase()}`);
       if (!res.ok) {
@@ -68,11 +71,28 @@ export const CustomerLookup: React.FC = () => {
       }
       const json = await res.json();
       setCustomer(json.data);
+
+      // Tải lịch sử báo chỉ số nước của khách hàng
+      try {
+        const readingsRes = await fetch(`/api/v1/meter-readings?customerCode=${codeToLookup.trim().toUpperCase()}`);
+        if (readingsRes.ok) {
+          const readingsJson = await readingsRes.json();
+          if (readingsJson.success && Array.isArray(readingsJson.data)) {
+            setCustomerReadings(readingsJson.data);
+          } else {
+            setCustomerReadings([]);
+          }
+        }
+      } catch {
+        setCustomerReadings([]);
+      }
     } catch (err: any) {
       setCustomer(null);
+      setCustomerReadings([]);
       setError(err?.message || 'Có lỗi xảy ra khi tra cứu.');
     } finally {
       setLoading(false);
+      setLoadingReadings(false);
     }
   };
 
@@ -321,7 +341,8 @@ export const CustomerLookup: React.FC = () => {
           )}
 
           {customer && (
-            <div className="bg-white rounded-xl border border-slate-200 shadow-sm p-6 max-w-2xl">
+            <>
+              <div className="bg-white rounded-xl border border-slate-200 shadow-sm p-6 max-w-2xl">
               <div className="flex justify-between items-center pb-4 border-b border-slate-100 mb-5">
                 <div>
                   <span className="text-xs font-bold text-slate-400 uppercase">Mã danh bộ khách hàng</span>
@@ -363,6 +384,84 @@ export const CustomerLookup: React.FC = () => {
                 </div>
               </div>
             </div>
+
+            {/* Khối Lịch sử báo chỉ số của khách hàng */}
+            <div className="bg-white rounded-xl border border-slate-200 shadow-sm p-6 max-w-2xl mt-4">
+              <div className="flex items-center justify-between pb-3 border-b border-slate-100 mb-4">
+                <div className="flex items-center gap-2">
+                  <svg className="w-4 h-4 text-blue-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
+                    <circle cx="12" cy="12" r="10" />
+                    <polyline points="12 6 12 12 16 14" />
+                  </svg>
+                  <h3 className="font-bold text-slate-800 text-sm">
+                    Lịch Sử Tự Báo Chỉ Số Nước (Zalo Mini App)
+                  </h3>
+                </div>
+                <span className="text-xs text-slate-400 font-medium">
+                  {customerReadings.length} kỳ ghi nhận
+                </span>
+              </div>
+
+              {loadingReadings ? (
+                <div className="py-6 text-center text-xs text-slate-400">Đang tải lịch sử chỉ số...</div>
+              ) : customerReadings.length === 0 ? (
+                <div className="py-6 text-center text-xs text-slate-400">
+                  Chưa có lượt tự báo chỉ số nước nào cho danh bộ này.
+                </div>
+              ) : (
+                <div className="overflow-x-auto">
+                  <table className="w-full text-left text-xs border-collapse">
+                    <thead>
+                      <tr className="bg-slate-50 text-[11px] font-bold text-slate-500 uppercase border-b border-slate-200">
+                        <th className="py-2 px-3">Kỳ nước</th>
+                        <th className="py-2 px-3 text-right">Chỉ số cũ</th>
+                        <th className="py-2 px-3 text-right">Chỉ số mới</th>
+                        <th className="py-2 px-3 text-right">Tiêu thụ</th>
+                        <th className="py-2 px-3 text-center">Trạng thái</th>
+                        <th className="py-2 px-3">Thời gian gửi</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-slate-100">
+                      {customerReadings.map((cr) => (
+                        <tr key={cr.id} className="hover:bg-slate-50">
+                          <td className="py-2.5 px-3 font-semibold text-blue-700">
+                            Kỳ {cr.period}
+                          </td>
+                          <td className="py-2.5 px-3 text-right font-mono text-slate-500">
+                            {cr.previousReading} m³
+                          </td>
+                          <td className="py-2.5 px-3 text-right font-mono font-bold text-slate-800">
+                            {cr.currentReading} m³
+                          </td>
+                          <td className="py-2.5 px-3 text-right font-mono font-extrabold text-emerald-700">
+                            +{cr.consumptionM3} m³
+                          </td>
+                          <td className="py-2.5 px-3 text-center">
+                            {cr.status === 'APPROVED' ? (
+                              <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-100 text-emerald-800">
+                                Đã duyệt
+                              </span>
+                            ) : cr.status === 'REJECTED' ? (
+                              <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-rose-100 text-rose-800">
+                                Từ chối
+                              </span>
+                            ) : (
+                              <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-amber-100 text-amber-800">
+                                Chờ duyệt
+                              </span>
+                            )}
+                          </td>
+                          <td className="py-2.5 px-3 text-slate-400 text-[11px]">
+                            {new Date(cr.submittedAt).toLocaleDateString('vi-VN')}
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              )}
+            </div>
+            </>
           )}
         </>
       )}

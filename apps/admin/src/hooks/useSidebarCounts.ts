@@ -6,6 +6,7 @@ export interface SidebarCounts {
   registrationsPending: number;
   activeOutages: number;
   activeStaff: number;
+  meterReadingsPending: number;
 }
 
 const DEFAULT_COUNTS: SidebarCounts = {
@@ -14,6 +15,7 @@ const DEFAULT_COUNTS: SidebarCounts = {
   registrationsPending: 0,
   activeOutages: 0,
   activeStaff: 0,
+  meterReadingsPending: 0,
 };
 
 export const REFRESH_SIDEBAR_COUNTS_EVENT = 'aquaflow:refresh-sidebar-counts';
@@ -34,12 +36,28 @@ export function useSidebarCounts(pollingIntervalMs = 5000) {
       if (res.ok) {
         const json = await res.json();
         if (json.success && json.data) {
+          let meterCount = json.data.meterReadingsPending !== undefined ? Number(json.data.meterReadingsPending) : NaN;
+          if (isNaN(meterCount)) {
+            try {
+              const mRes = await fetch('/api/v1/meter-readings');
+              if (mRes.ok) {
+                const mJson = await mRes.json();
+                if (mJson.success && Array.isArray(mJson.data)) {
+                  meterCount = mJson.data.filter((r: any) => r.status === 'PENDING_REVIEW').length;
+                }
+              }
+            } catch {
+              meterCount = 0;
+            }
+          }
+
           setCounts({
             queueWaiting: Number(json.data.queueWaiting) || 0,
             complaintsPending: Number(json.data.complaintsPending) || 0,
             registrationsPending: Number(json.data.registrationsPending) || 0,
             activeOutages: Number(json.data.activeOutages) || 0,
             activeStaff: Number(json.data.activeStaff) || 0,
+            meterReadingsPending: Number(meterCount) || 0,
           });
         }
       }
